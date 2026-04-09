@@ -417,6 +417,13 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px}
       <div class="field"><label>Confirm New Password <span class="req">✱</span></label><input id="cpNew2" type="password" placeholder="Repeat new password"/></div>
       <button class="btn-primary" onclick="doChangePassword()">🔒 Change Password</button>
     </div>
+
+    <!-- Credit -->
+    <div style="margin-top:20px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);text-align:center">
+      <div style="font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Designed & Developed by</div>
+      <div style="font-size:13.5px;font-weight:800;background:linear-gradient(90deg,#a5b4fc,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.02em">Biswajit Bhattacharjee</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:3px">Chief Manager (Liaison) · SBI LHO Guwahati</div>
+    </div>
   </div>
 </div>
 
@@ -591,7 +598,10 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px}
         <div class="user-mgmt-grid" id="adminUserCards"><p class="empty-msg">Loading…</p></div>
       </div>
       <div class="gcard">
-        <div class="gcard-title">🚗 Travel Agents</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="gcard-title" style="margin-bottom:0">🚗 Travel Agents</div>
+          <button class="btn-apply" onclick="openAddAgentModal()" style="font-size:12px;padding:7px 14px">➕ Add Agent</button>
+        </div>
         <div class="user-mgmt-grid" id="agentUserCards"><p class="empty-msg">Loading…</p></div>
       </div>
     </div>
@@ -668,6 +678,38 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px}
   </div>
 
 </div><!-- end appScreen -->
+
+<!-- Edit Agent Modal -->
+<div class="modal-overlay" id="editAgentModal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit Travel Agent</div>
+    <input type="hidden" id="editAgentIdx"/>
+    <div class="field"><label>Agency Name <span class="req">✱</span></label><input id="eaAgency" type="text" placeholder="Agency name"/></div>
+    <div class="field"><label>Contact Person</label><input id="eaName" type="text" placeholder="Contact person name"/></div>
+    <div class="field"><label>Contact Number</label><input id="eaContact" type="tel" placeholder="Mobile number"/></div>
+    <div class="field"><label>User ID <span class="req">✱</span></label><input id="eaUserId" type="text" placeholder="Login user ID"/></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAgentModal()">Cancel</button>
+      <button class="btn-primary" style="flex:1;margin-top:0" onclick="doEditAgent()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Agent Modal -->
+<div class="modal-overlay" id="addAgentModal">
+  <div class="modal-box">
+    <div class="modal-title">➕ Add New Agent</div>
+    <div class="field"><label>Agency Name <span class="req">✱</span></label><input id="aaAgency" type="text" placeholder="Agency name"/></div>
+    <div class="field"><label>Contact Person</label><input id="aaName" type="text" placeholder="Contact person name"/></div>
+    <div class="field"><label>Contact Number</label><input id="aaContact" type="tel" placeholder="Mobile number"/></div>
+    <div class="field"><label>User ID <span class="req">✱</span></label><input id="aaUserId" type="text" placeholder="Login user ID"/></div>
+    <div class="field"><label>Default Password <span class="req">✱</span></label><input id="aaPassword" type="text" placeholder="Initial password"/></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="ge('addAgentModal').classList.remove('open')">Cancel</button>
+      <button class="btn-primary" style="flex:1;margin-top:0" onclick="doAddAgent()">➕ Add Agent</button>
+    </div>
+  </div>
+</div>
 
 <!-- Edit Request Modal -->
 <div class="modal-overlay" id="editModal">
@@ -757,11 +799,11 @@ const ADMINS=[
   {userId:"364310",name:"Papan Kumar Das",        role:"admin"}
 ];
 const AGENTS=[
-  {userId:"biswanath",    agencyName:"Biswanath Travels",  name:"Biswanath Travels"},
-  {userId:"redcomm",      agencyName:"Redcomm Travels",    name:"Redcomm Travels"},
-  {userId:"cozy",         agencyName:"Cozy Travels",       name:"Cozy Travels"},
-  {userId:"travelservice",agencyName:"Travel Service",     name:"Travel Service"},
-  {userId:"suvrashree",   agencyName:"Suvrashree Travels", name:"Suvrashree Travels"}
+  {userId:"biswanath",    agencyName:"Biswanath Travels",  name:"Biswanath Travels", contact:"8638291741"},
+  {userId:"redcomm",      agencyName:"Redcomm Travels",    name:"Redcomm Travels",   contact:"9864044491"},
+  {userId:"cozy",         agencyName:"Cozy Travels",       name:"Cozy Travels",      contact:"9864501234"},
+  {userId:"travelservice",agencyName:"Travel Service",     name:"Travel Service",    contact:"9954189734"},
+  {userId:"suvrashree",   agencyName:"Suvrashree Travels", name:"Suvrashree Travels",contact:"9864047027"}
 ];
 const ALL_USERS=[...ADMINS,...AGENTS];
 
@@ -952,7 +994,7 @@ function renderAdminRequests(){
       <td><span class="agency-chip">${esc(r.agencyName||"—")}</span></td>
       <td class="mono">${esc(r.journeyDate)}<br><span style="opacity:.5;font-size:10.5px">${esc(r.journeyTime||"")}</span></td>
       <td style="max-width:140px;word-break:break-word;font-size:13px">${esc(r.purpose||"—")}</td>
-      <td>${r.vehicleNo?`<div class="mono" style="font-size:12.5px">${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</div><div class="sub-text">${esc(r.driverName||"")}${r.driverContact?" · "+esc(r.driverContact):""}</div>${r.bookingComment?`<div class="sub-text" style="color:#67e8f9">💬 ${esc(r.bookingComment)}</div>`:""}`:`${r.bookingComment?`<div class="sub-text" style="color:#67e8f9">💬 ${esc(r.bookingComment)}</div>`:'<span class="sub-text">Awaiting agent</span>'}`}</td>
+      <td>${r.vehicleNo?`<div class="mono" style="font-size:12.5px">${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</div><div class="sub-text">${esc(r.driverName||"")}${r.driverContact?" · "+esc(r.driverContact):""}</div>${r.driverContact?`<a href="tel:${esc(r.driverContact)}" style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:3px 9px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:6px;color:#6ee7b7;font-size:11px;font-weight:700;text-decoration:none">📞 Call Driver</a>`:""} ${r.bookingComment?`<div class="sub-text" style="color:#67e8f9;margin-top:3px">💬 ${esc(r.bookingComment)}</div>`:""}`:`${r.bookingComment?`<div class="sub-text" style="color:#67e8f9">💬 ${esc(r.bookingComment)}</div>`:'<span class="sub-text">Awaiting agent</span>'}`}</td>
       <td><div class="action-btns">${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓ Done</button>`:""}<button class="btn-sm btn-edit" onclick="openEditModal('${r._key}')">✏️ Edit</button><button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕ Del</button></div></td>
     </tr>`).join(""):`<tr><td colspan="7" class="empty-msg">No records found.</td></tr>`;
 }
@@ -1058,6 +1100,7 @@ function renderAgentView(){
         👤 ${esc(r.driverName||"—")} · <span class="mono">${esc(r.driverContact||"")}</span><br>
         🪪 Badge: ${esc(r.driverBadge||"—")}
         ${r.bookingComment?`<br>💬 ${esc(r.bookingComment)}`:""}
+        ${r.driverContact?`<br><a href="tel:${esc(r.driverContact)}" style="display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:6px 14px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.35);border-radius:8px;color:#6ee7b7;font-size:13px;font-weight:700;text-decoration:none">📞 Call Driver</a>`:""}
       </div>`:""}
     </div>`;
   }).join(""):`<p class="empty-msg" style="padding:40px 0">No requests assigned to you yet.<br><span style="font-size:12px;opacity:.5">Requests will appear here once admin assigns them.</span></p>`;
@@ -1106,10 +1149,30 @@ window.doEditRequest=async function(){
   toast("Request updated successfully!","success");
 };
 
+// ── AGENTS DATA (Firebase-backed, seeded from AGENTS array) ──────────────────
+let agentsData=[...AGENTS]; // live copy, synced from Firebase
+
+async function initAgentsData(){
+  const snap=await get(ref(db,"agentsData"));
+  if(!snap.exists()){
+    const obj={};
+    AGENTS.forEach(a=>{ obj[a.userId]={...a}; });
+    await set(ref(db,"agentsData"),obj);
+  }
+}
+await initAgentsData();
+
+onValue(ref(db,"agentsData"),snap=>{
+  agentsData=[];
+  snap.forEach(c=>agentsData.push({...c.val(),_fbKey:c.key}));
+  if(currentUser?.role==="admin") window.renderUserMgmt();
+});
+
 // ── USER MANAGEMENT ───────────────────────────────────────────────────────────
 window.renderUserMgmt=function(){
   const ac=ge("adminUserCards"),ag2=ge("agentUserCards");
   if(!ac||!ag2) return;
+
   ac.innerHTML=ADMINS.map(a=>{
     return`<div class="user-card">
       <div class="user-card-header">
@@ -1122,27 +1185,82 @@ window.renderUserMgmt=function(){
     </div>`;
   }).join("");
 
-  ag2.innerHTML=AGENTS.map(ag=>{
+  ag2.innerHTML=agentsData.length ? agentsData.map((ag,i)=>{
     const pd=userPassMap[ag.userId]||{};
     const dis=pd.disabled||false;
     const cnt=Object.values(allRequests).filter(r=>r.agentUserId===ag.userId).length;
     return`<div class="user-card">
       <div class="user-card-header">
         <div>
-          <div class="user-card-name">${esc(ag.name)}</div>
-          <div class="user-card-meta mono">${esc(ag.userId)}</div>
+          <div class="user-card-name">${esc(ag.agencyName||ag.name)}</div>
+          <div class="user-card-meta mono">ID: ${esc(ag.userId)}</div>
+          ${ag.contact?`<div class="user-card-meta">📞 <a href="tel:${esc(ag.contact)}" style="color:#a5b4fc;text-decoration:none">${esc(ag.contact)}</a></div>`:""}
           <div class="user-card-meta">${cnt} request${cnt!==1?"s":""}</div>
         </div>
         <span class="role-badge">Agent</span>
       </div>
       <div class="user-card-actions">
-        <button class="btn-sm btn-edit" onclick="openResetModal('${ag.userId}','${esc(ag.name)}')">🔑 Reset Pwd</button>
+        <button class="btn-sm btn-edit" onclick="openEditAgentModal('${ag.userId}')">✏️ Edit</button>
+        <button class="btn-sm btn-edit" onclick="openResetModal('${esc(ag.userId)}','${esc(ag.agencyName||ag.name)}')">🔑 Pwd</button>
         <button class="toggle-btn ${dis?"disabled":"enabled"}" onclick="toggleDisable('${ag.userId}')">
-          ${dis?"🔴 Disabled":"🟢 Active"}
+          ${dis?"🔴 Off":"🟢 On"}
         </button>
+        <button class="btn-sm btn-del" onclick="deleteAgent('${ag.userId}')">🗑 Del</button>
       </div>
     </div>`;
-  }).join("");
+  }).join("") : `<p class="empty-msg">No agents found.</p>`;
+};
+
+// Edit Agent
+window.openEditAgentModal=function(uid){
+  const ag=agentsData.find(a=>a.userId===uid); if(!ag) return;
+  ge("eaAgency").value=ag.agencyName||ag.name||"";
+  ge("eaName").value=ag.name||"";
+  ge("eaContact").value=ag.contact||"";
+  ge("eaUserId").value=ag.userId||"";
+  ge("editAgentIdx").value=uid;
+  ge("editAgentModal").classList.add("open");
+};
+window.closeAgentModal=function(){
+  ge("editAgentModal").classList.remove("open");
+};
+window.doEditAgent=async function(){
+  const uid=ge("editAgentIdx").value;
+  const agencyName=ge("eaAgency").value.trim();
+  const name=ge("eaName").value.trim()||agencyName;
+  const contact=ge("eaContact").value.trim();
+  const newUid=ge("eaUserId").value.trim();
+  if(!agencyName||!newUid){toast("Agency name and User ID are required","error");return;}
+  await update(ref(db,"agentsData/"+uid),{agencyName,name,contact,userId:newUid});
+  closeAgentModal();
+  toast("Agent updated!","success");
+};
+
+// Add Agent
+window.openAddAgentModal=function(){
+  ge("aaAgency").value=ge("aaName").value=ge("aaContact").value=ge("aaUserId").value=ge("aaPassword").value="";
+  ge("addAgentModal").classList.add("open");
+};
+window.doAddAgent=async function(){
+  const agencyName=ge("aaAgency").value.trim();
+  const name=ge("aaName").value.trim()||agencyName;
+  const contact=ge("aaContact").value.trim();
+  const userId=ge("aaUserId").value.trim();
+  const pwd=ge("aaPassword").value.trim();
+  if(!agencyName||!userId||!pwd){toast("Agency, User ID and Password are required","error");return;}
+  if(agentsData.find(a=>a.userId===userId)){toast("User ID already exists","error");return;}
+  await set(ref(db,"agentsData/"+userId),{agencyName,name,contact,userId});
+  await set(ref(db,"passwords/"+userId),{passHash:await H(pwd),disabled:false});
+  ge("addAgentModal").classList.remove("open");
+  toast("Agent added successfully!","success");
+};
+
+// Delete Agent
+window.deleteAgent=async function(uid){
+  if(!confirm("Delete this agent? Their requests will remain but they won't be able to login."))return;
+  await remove(ref(db,"agentsData/"+uid));
+  await remove(ref(db,"passwords/"+uid));
+  toast("Agent deleted.","info");
 };
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
@@ -1205,23 +1323,30 @@ let allVehTypes=[];
 async function initVehTypes(){
   const snap=await get(ref(db,"vehicleTypes"));
   if(!snap.exists()){
-    for(const t of DEFAULT_VEH_TYPES) await push(ref(db,"vehicleTypes"),{name:t});
+    const obj={};
+    DEFAULT_VEH_TYPES.forEach((t,i)=>{ obj["vt"+String(i+1).padStart(2,"0")]={name:t}; });
+    await set(ref(db,"vehicleTypes"),obj);
   }
 }
 await initVehTypes();
 
 onValue(ref(db,"vehicleTypes"),snap=>{
   allVehTypes=[];
-  snap.forEach(c=>allVehTypes.push({key:c.key,...c.val()}));
+  if(snap.exists()){
+    snap.forEach(c=>{
+      const val=c.val();
+      if(val && val.name) allVehTypes.push({key:c.key, name:val.name});
+    });
+  }
+  allVehTypes.sort((a,b)=>a.name.localeCompare(b.name));
   refreshVehTypeDropdowns();
-  // Always re-render if tab is visible
-  const vt=ge("vehTypesTab");
-  if(vt&&vt.style.display!=="none") renderVehTypes();
+  window.renderVehTypes();
 });
 
 function refreshVehTypeDropdowns(){
-  const opts=`<option value="">— Select Vehicle Type —</option>`+allVehTypes.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("");
-  ["reqVehType","agentVehType","eVehType"].forEach(id=>{
+  const opts=`<option value="">— Select Vehicle Type —</option>`+
+    allVehTypes.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("");
+  ["reqVehType","eVehType"].forEach(id=>{
     const sel=ge(id); if(!sel) return;
     const cur=sel.value;
     sel.innerHTML=opts;
@@ -1238,16 +1363,17 @@ window.renderVehTypes=function(){
           <span style="font-size:13.5px;font-weight:600;color:#fff">🚘 ${esc(t.name)}</span>
           <button class="btn-sm btn-del" onclick="delVehType('${t.key}')" style="padding:3px 8px;font-size:11px">✕</button>
         </div>`).join("")}
-    </div>`:`<p class="empty-msg">No vehicle types yet. Add one above.</p>`;
+    </div>`:`<p class="empty-msg">No vehicle types. Add one above.</p>`;
 };
 
 window.addVehType=async function(){
   const name=ge("newVehType").value.trim();
   if(!name){toast("Enter a vehicle type name","error");return;}
   if(allVehTypes.find(t=>t.name.toLowerCase()===name.toLowerCase())){toast("Already exists!","error");return;}
-  await push(ref(db,"vehicleTypes"),{name});
+  const newKey="vt"+Date.now();
+  await set(ref(db,"vehicleTypes/"+newKey),{name});
   ge("newVehType").value="";
-  toast("Vehicle type added!","success");
+  toast("Vehicle type added: "+name,"success");
 };
 window.delVehType=async function(key){
   if(!confirm("Delete this vehicle type?"))return;
