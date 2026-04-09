@@ -445,8 +445,7 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px}
     <button class="tab-btn"        data-tab="newReqTab"   onclick="showTab('newReqTab')">➕ New Request</button>
     <button class="tab-btn"        data-tab="calTab"      onclick="showTab('calTab');renderCalendar()">🗓 Calendar</button>
     <button class="tab-btn"        data-tab="vehTypesTab" onclick="showTab('vehTypesTab');renderVehTypes()">🚘 Vehicle Types</button>
-    <button class="tab-btn"        data-tab="userMgmtTab" onclick="showTab('userMgmtTab');renderUserMgmt()">👥 Users</button>
-    <button class="tab-btn"        data-tab="profileTab"  onclick="showTab('profileTab')">🔒 My Password</button>
+    <button class="tab-btn"        data-tab="userMgmtTab" onclick="showTab('userMgmtTab');renderUserMgmt()">👥 Users</button>    <button class="tab-btn"        data-tab="profileTab"  onclick="showTab('profileTab')">🔒 My Password</button>
   </div>
 
   <!-- Admin Main Content -->
@@ -670,6 +669,41 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px}
 
 </div><!-- end appScreen -->
 
+<!-- Edit Request Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-title">✏️ Edit Request</div>
+    <div class="form-grid">
+      <div class="field"><label>Executive Name <span class="req">✱</span></label><input id="eExecName" type="text"/></div>
+      <div class="field"><label>Designation <span class="req">✱</span></label><input id="eExecDesig" type="text"/></div>
+      <div class="field"><label>Contact</label><input id="eExecContact" type="tel"/></div>
+      <div class="field"><label>Agency <span class="req">✱</span></label>
+        <select id="eAgency">
+          <option value="">— Select —</option>
+          <option>Biswanath Travels</option>
+          <option>Redcomm Travels</option>
+          <option>Cozy Travels</option>
+          <option>Travel Service</option>
+          <option>Suvrashree Travels</option>
+        </select>
+      </div>
+      <div class="field"><label>Vehicle Type</label>
+        <select id="eVehType">
+          <option value="">— Select —</option>
+        </select>
+      </div>
+      <div class="field"><label>Journey Date <span class="req">✱</span></label><input id="eJourneyDate" type="date"/></div>
+      <div class="field"><label>Journey Time</label><input id="eJourneyTime" type="time"/></div>
+      <div class="field full"><label>Purpose</label><input id="ePurpose" type="text"/></div>
+      <div class="field full"><label>Notes</label><textarea id="eNotes" style="min-height:56px"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary" style="flex:1;margin-top:0" onclick="doEditRequest()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Reset Password Modal -->
 <div class="modal-overlay" id="resetModal">
   <div class="modal-box">
@@ -757,7 +791,10 @@ onValue(ref(db,"requests"),snap=>{
 onValue(ref(db,"passwords"),snap=>{
   userPassMap={};
   snap.forEach(c=>{userPassMap[c.key]=c.val()});
-  if(currentUser?.role==="admin") renderUserMgmt();
+  // Always re-render user mgmt if tab is visible or user is admin
+  if(currentUser?.role==="admin"){
+    renderUserMgmt();
+  }
 });
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -915,7 +952,7 @@ function renderAdminRequests(){
       <td class="mono">${esc(r.journeyDate)}<br><span style="opacity:.5;font-size:10.5px">${esc(r.journeyTime||"")}</span></td>
       <td style="max-width:140px;word-break:break-word;font-size:13px">${esc(r.purpose||"—")}</td>
       <td>${r.vehicleNo?`<div class="mono" style="font-size:12.5px">${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</div><div class="sub-text">${esc(r.driverName||"")}${r.driverContact?" · "+esc(r.driverContact):""}</div>${r.bookingComment?`<div class="sub-text" style="color:#67e8f9">💬 ${esc(r.bookingComment)}</div>`:""}`:`${r.bookingComment?`<div class="sub-text" style="color:#67e8f9">💬 ${esc(r.bookingComment)}</div>`:'<span class="sub-text">Awaiting agent</span>'}`}</td>
-      <td><div class="action-btns">${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓ Done</button>`:""}<button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕</button></div></td>
+      <td><div class="action-btns">${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓ Done</button>`:""}<button class="btn-sm btn-edit" onclick="openEditModal('${r._key}')">✏️ Edit</button><button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕ Del</button></div></td>
     </tr>`).join(""):`<tr><td colspan="7" class="empty-msg">No records found.</td></tr>`;
 }
 
@@ -1025,6 +1062,49 @@ function renderAgentView(){
   }).join(""):`<p class="empty-msg" style="padding:40px 0">No requests assigned to you yet.<br><span style="font-size:12px;opacity:.5">Requests will appear here once admin assigns them.</span></p>`;
 }
 
+// ── EDIT REQUEST ──────────────────────────────────────────────────────────────
+let editTargetKey=null;
+window.openEditModal=function(key){
+  const r=allRequests[key]; if(!r) return;
+  editTargetKey=key;
+  ge("eExecName").value=r.execName||"";
+  ge("eExecDesig").value=r.execDesig||"";
+  ge("eExecContact").value=r.execContact||"";
+  ge("eAgency").value=r.agencyName||"";
+  ge("eJourneyDate").value=r.journeyDate||"";
+  ge("eJourneyTime").value=r.journeyTime||"";
+  ge("ePurpose").value=r.purpose||"";
+  ge("eNotes").value=r.notes||"";
+  // populate vehicle type dropdown
+  const sel=ge("eVehType");
+  sel.innerHTML=`<option value="">— Select —</option>`+allVehTypes.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("");
+  sel.value=r.vehicleType||"";
+  ge("editModal").classList.add("open");
+};
+window.closeEditModal=function(){ge("editModal").classList.remove("open");};
+window.doEditRequest=async function(){
+  const execName=ge("eExecName").value.trim();
+  const execDesig=ge("eExecDesig").value.trim();
+  const agencyName=ge("eAgency").value;
+  const journeyDate=ge("eJourneyDate").value;
+  if(!execName||!execDesig||!agencyName||!journeyDate){toast("Fill required fields","error");return;}
+  const agent=AGENTS.find(a=>a.agencyName===agencyName);
+  await update(ref(db,"requests/"+editTargetKey),{
+    execName,
+    execDesig,
+    execContact:ge("eExecContact").value.trim(),
+    agencyName,
+    agentUserId:agent?.userId||null,
+    vehicleType:ge("eVehType").value,
+    journeyDate,
+    journeyTime:ge("eJourneyTime").value,
+    purpose:ge("ePurpose").value.trim(),
+    notes:ge("eNotes").value.trim(),
+  });
+  closeEditModal();
+  toast("Request updated successfully!","success");
+};
+
 // ── USER MANAGEMENT ───────────────────────────────────────────────────────────
 function renderUserMgmt(){
   ge("adminUserCards").innerHTML=ADMINS.map(a=>{
@@ -1131,7 +1211,9 @@ onValue(ref(db,"vehicleTypes"),snap=>{
   allVehTypes=[];
   snap.forEach(c=>allVehTypes.push({key:c.key,...c.val()}));
   refreshVehTypeDropdowns();
-  if(currentUser?.role==="admin") renderVehTypes();
+  // Always re-render if tab is visible
+  const vt=ge("vehTypesTab");
+  if(vt&&vt.style.display!=="none") renderVehTypes();
 });
 
 function refreshVehTypeDropdowns(){
@@ -1144,7 +1226,8 @@ function refreshVehTypeDropdowns(){
 }
 
 window.renderVehTypes=function(){
-  ge("vehTypesList").innerHTML=allVehTypes.length?`
+  const el=ge("vehTypesList"); if(!el) return;
+  el.innerHTML=allVehTypes.length?`
     <div style="display:flex;flex-wrap:wrap;gap:8px">
       ${allVehTypes.map(t=>`
         <div style="display:flex;align-items:center;gap:8px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:9px;padding:8px 12px">
