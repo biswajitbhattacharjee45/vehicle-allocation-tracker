@@ -330,12 +330,13 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px}
 }
 
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .modal-overlay.open{display:flex}
 .modal-box{
   background:rgba(15,12,41,.97);border:1px solid rgba(99,102,241,.3);
   border-radius:20px;padding:28px;width:100%;max-width:380px;
   box-shadow:0 24px 60px rgba(0,0,0,.7),0 0 0 1px rgba(99,102,241,.1);
+  max-height:90vh;overflow-y:auto;
 }
 .modal-title{font-size:16px;font-weight:800;color:#fff;margin-bottom:18px;text-align:center}
 .modal-actions{display:flex;gap:10px;margin-top:16px}
@@ -1164,16 +1165,18 @@ window.doEditRequest=async function(){
 let agentsData=[...AGENTS]; // live copy, synced from Firebase
 
 async function initAgentsData(){
-  // Always ensure all 5 agents exist in Firebase
-  for(const a of AGENTS){
-    const snap=await get(ref(db,"agentsData/"+a.userId));
-    if(!snap.exists()){
-      await set(ref(db,"agentsData/"+a.userId),{
-        userId:a.userId, agencyName:a.agencyName,
-        name:a.name, contact:a.contact||""
-      });
-    }
-  }
+  // Force-ensure every default agent exists in Firebase
+  const writes=AGENTS.map(a=>
+    get(ref(db,"agentsData/"+a.userId)).then(snap=>{
+      if(!snap.exists()){
+        return set(ref(db,"agentsData/"+a.userId),{
+          userId:a.userId,agencyName:a.agencyName,
+          name:a.name,contact:a.contact||""
+        });
+      }
+    })
+  );
+  await Promise.all(writes);
 }
 await initAgentsData();
 
@@ -1312,16 +1315,29 @@ window.renderCalendar=function(){
   ge("calDays").innerHTML=html;
 };
 window.showDayTrips=function(ds){
-  const trips=Object.values(allRequests).filter(r=>r.journeyDate===ds);
-  const d=new Date(ds);
-  ge("calDayTitle").textContent="Trips on "+d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  // Include trips where ds falls within journeyDate → journeyToDate range
+  const trips=Object.values(allRequests).filter(r=>{
+    if(!r.journeyDate) return false;
+    const end=r.journeyToDate||r.journeyDate;
+    return ds>=r.journeyDate && ds<=end;
+  });
+  const d=new Date(ds+"T00:00:00");
+  ge("calDayTitle").textContent="Trips on "+d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+" ("+trips.length+" booking"+(trips.length!==1?"s":"")+")" ;
   ge("calDayList").innerHTML=trips.length?trips.map(r=>`
     <div class="recent-item">
-      <div class="recent-top"><span class="sbadge ${r.status}">${statusLabel(r.status)}</span><strong>${esc(r.execName)}</strong><span style="font-size:12px;opacity:.5">— ${esc(r.execDesig||"")}</span></div>
-      <div class="recent-meta">🚗 ${esc(r.agencyName||"—")}${r.vehicleNo?" · "+esc(r.vehicleNo):""}${r.journeyTime?" · "+esc(r.journeyTime):""}</div>
+      <div class="recent-top">
+        <span class="sbadge ${r.status}">${statusLabel(r.status)}</span>
+        <strong>${esc(r.execName)}</strong>
+        <span style="font-size:12px;opacity:.5">— ${esc(r.execDesig||"")}</span>
+      </div>
+      <div class="recent-meta">🚗 ${esc(r.agencyName||"—")} ${r.vehicleType?"· "+esc(r.vehicleType):""} ${r.vehicleNo?"· "+esc(r.vehicleNo):""}</div>
+      <div class="recent-meta">📅 ${esc(r.journeyDate)}${r.journeyTime?" "+esc(r.journeyTime):""}${r.journeyToDate?" → "+esc(r.journeyToDate)+(r.journeyToTime?" "+esc(r.journeyToTime):""):""}</div>
       ${r.purpose?`<div class="recent-meta">📌 ${esc(r.purpose)}</div>`:""}
+      ${r.driverName?`<div class="recent-meta">👤 ${esc(r.driverName)}${r.driverContact?` · <a href="tel:${esc(r.driverContact)}" style="color:#a5b4fc">${esc(r.driverContact)}</a>`:""}</div>`:""}
     </div>`).join(""):`<p class="empty-msg">No trips on this day.</p>`;
-  ge("calDayTrips").style.display="block";
+  const el=ge("calDayTrips");
+  el.style.display="block";
+  setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"start"}),100);
 };
 window.calPrev=function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();ge("calDayTrips").style.display="none";};
 window.calNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();ge("calDayTrips").style.display="none";};
@@ -1446,16 +1462,24 @@ window.renderAgentCalendar=function(){
 };
 
 window.showAgentDayTrips=function(ds){
-  const trips=Object.values(allRequests).filter(r=>r.agentUserId===currentUser.userId&&r.journeyDate===ds&&["booked","confirmed","completed"].includes(r.status));
-  const d=new Date(ds);
-  ge("agentCalDayTitle").textContent="My Bookings on "+d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const trips=Object.values(allRequests).filter(r=>{
+    if(r.agentUserId!==currentUser.userId) return false;
+    if(!r.journeyDate||!["booked","confirmed","completed"].includes(r.status)) return false;
+    const end=r.journeyToDate||r.journeyDate;
+    return ds>=r.journeyDate&&ds<=end;
+  });
+  const d=new Date(ds+"T00:00:00");
+  ge("agentCalDayTitle").textContent="My Bookings on "+d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+" ("+trips.length+")";
   ge("agentCalDayList").innerHTML=trips.length?trips.map(r=>`
     <div class="recent-item">
       <div class="recent-top"><span class="sbadge ${r.status}">${statusLabel(r.status)}</span><strong>${esc(r.execName)}</strong></div>
-      <div class="recent-meta">🚘 ${esc(r.vehicleType||"—")} ${r.vehicleNo?"· "+esc(r.vehicleNo):""}${r.journeyTime?" · "+esc(r.journeyTime):""}</div>
+      <div class="recent-meta">🚘 ${esc(r.vehicleType||"—")} ${r.vehicleNo?"· "+esc(r.vehicleNo):""}</div>
+      <div class="recent-meta">📅 ${esc(r.journeyDate)}${r.journeyTime?" "+esc(r.journeyTime):""}${r.journeyToDate?" → "+esc(r.journeyToDate)+(r.journeyToTime?" "+esc(r.journeyToTime):""):""}</div>
       ${r.purpose?`<div class="recent-meta">📌 ${esc(r.purpose)}</div>`:""}
     </div>`).join(""):`<p class="empty-msg">No confirmed bookings on this day.</p>`;
-  ge("agentCalDayTrips").style.display="block";
+  const el=ge("agentCalDayTrips");
+  el.style.display="block";
+  setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"start"}),100);
 };
 
 window.agentCalPrev=function(){agentCalMonth--;if(agentCalMonth<0){agentCalMonth=11;agentCalYear--;}renderAgentCalendar();ge("agentCalDayTrips").style.display="none";};
