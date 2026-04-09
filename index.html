@@ -542,8 +542,10 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px}
               <option value="">— Select Vehicle Type —</option>
             </select>
           </div>
-          <div class="field"><label>Journey Date <span class="req">✱</span></label><input id="journeyDate" type="date"/></div>
-          <div class="field"><label>Journey Time</label><input id="journeyTime" type="time"/></div>
+          <div class="field"><label>Journey From Date <span class="req">✱</span></label><input id="journeyDate" type="date"/></div>
+          <div class="field"><label>From Time</label><input id="journeyTime" type="time"/></div>
+          <div class="field"><label>Journey To Date <span class="req">✱</span></label><input id="journeyToDate" type="date"/></div>
+          <div class="field"><label>To Time</label><input id="journeyToTime" type="time"/></div>
           <div class="field full"><label>Purpose / Trip Details</label><input id="purpose" type="text" placeholder="e.g. Airport pickup, Hotel drop, Site visit…"/></div>
           <div class="field full"><label>Additional Notes</label><textarea id="reqNotes" placeholder="Any special instructions for the travel agent…"></textarea></div>
         </div>
@@ -734,8 +736,10 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px}
           <option value="">— Select —</option>
         </select>
       </div>
-      <div class="field"><label>Journey Date <span class="req">✱</span></label><input id="eJourneyDate" type="date"/></div>
-      <div class="field"><label>Journey Time</label><input id="eJourneyTime" type="time"/></div>
+      <div class="field"><label>From Date <span class="req">✱</span></label><input id="eJourneyDate" type="date"/></div>
+      <div class="field"><label>From Time</label><input id="eJourneyTime" type="time"/></div>
+      <div class="field"><label>To Date <span class="req">✱</span></label><input id="eJourneyToDate" type="date"/></div>
+      <div class="field"><label>To Time</label><input id="eJourneyToTime" type="time"/></div>
       <div class="field full"><label>Purpose</label><input id="ePurpose" type="text"/></div>
       <div class="field full"><label>Notes</label><textarea id="eNotes" style="min-height:56px"></textarea></div>
     </div>
@@ -992,7 +996,7 @@ function renderAdminRequests(){
       <td><span class="sbadge ${r.status}">${statusLabel(r.status)}</span></td>
       <td><div class="exec-name">${esc(r.execName)}</div><div class="sub-text">${esc(r.execDesig||"")}</div><div class="sub-text mono">${esc(r.execContact||"")}</div></td>
       <td><span class="agency-chip">${esc(r.agencyName||"—")}</span></td>
-      <td class="mono">${esc(r.journeyDate)}<br><span style="opacity:.5;font-size:10.5px">${esc(r.journeyTime||"")}</span></td>
+      <td class="mono">${esc(r.journeyDate)}<br><span style="opacity:.5;font-size:10.5px">${esc(r.journeyTime||"")}</span>${r.journeyToDate&&r.journeyToDate!==r.journeyDate?`<br><span style="opacity:.5;font-size:10px">to ${esc(r.journeyToDate)} ${esc(r.journeyToTime||"")}</span>`:""}</td>
       <td style="max-width:140px;word-break:break-word;font-size:13px">${esc(r.purpose||"—")}</td>
       <td>${r.vehicleNo?`<div class="mono" style="font-size:12.5px">${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</div><div class="sub-text">${esc(r.driverName||"")}${r.driverContact?" · "+esc(r.driverContact):""}</div>${r.driverContact?`<a href="tel:${esc(r.driverContact)}" style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:3px 9px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:6px;color:#6ee7b7;font-size:11px;font-weight:700;text-decoration:none">📞 Call Driver</a>`:""} ${r.bookingComment?`<div class="sub-text" style="color:#67e8f9;margin-top:3px">💬 ${esc(r.bookingComment)}</div>`:""}`:`${r.bookingComment?`<div class="sub-text" style="color:#67e8f9">💬 ${esc(r.bookingComment)}</div>`:'<span class="sub-text">Awaiting agent</span>'}`}</td>
       <td><div class="action-btns">${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓ Done</button>`:""}<button class="btn-sm btn-edit" onclick="openEditModal('${r._key}')">✏️ Edit</button><button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕ Del</button></div></td>
@@ -1003,22 +1007,28 @@ window.saveRequest=async function(){
   const execName=v("execName"),execDesig=v("execDesig"),execContact=v("execContact");
   const agencyName=v("agencySelect"),vehicleType=v("reqVehType");
   const journeyDate=v("journeyDate"),journeyTime=v("journeyTime");
+  const journeyToDate=v("journeyToDate"),journeyToTime=v("journeyToTime");
   const purpose=v("purpose"),notes=v("reqNotes");
-  if(!execName||!execDesig||!agencyName||!vehicleType||!journeyDate){toast("Fill all required fields","error");return;}
-  const agent=AGENTS.find(a=>a.agencyName===agencyName);
+  if(!execName||!execDesig||!agencyName||!vehicleType||!journeyDate||!journeyToDate){
+    toast("Fill all required fields including From and To dates","error");return;
+  }
+  if(journeyToDate<journeyDate){toast("To Date cannot be before From Date","error");return;}
+  const agent=agentsData.find(a=>a.agencyName===agencyName)||AGENTS.find(a=>a.agencyName===agencyName);
   const entry={
     execName,execDesig,execContact,agencyName,vehicleType,
     agentUserId:agent?.userId||null,
-    journeyDate,journeyTime,purpose,notes,
+    journeyDate,journeyTime,journeyToDate,journeyToTime,
+    purpose,notes,
     vehicleNo:"",driverName:"",driverBadge:"",driverContact:"",bookingComment:"",
     status:agent?"assigned":"pending",
     createdAt:Date.now()
   };
   try{
     await push(ref(db,"requests"),entry);
-    ge("execName").value=ge("execDesig").value=ge("execContact").value="";
-    ge("agencySelect").value=ge("reqVehType").value=ge("journeyTime").value=ge("purpose").value=ge("reqNotes").value="";
-    ge("journeyDate").value="";setDefaults();
+    ["execName","execDesig","execContact","agencySelect","reqVehType",
+     "journeyTime","journeyToTime","purpose","reqNotes","journeyDate","journeyToDate"]
+      .forEach(id=>{const e=ge(id);if(e)e.value="";});
+    setDefaults();
     toast("Request saved & assigned to agent!","success");
     showTab("requestsTab");
   }catch(e){toast("Save failed: "+e.message,"error");}
@@ -1055,7 +1065,7 @@ function renderAgentView(){
     return`<div class="agent-req-card ${r.status}">
       <div class="arc-header">
         <span class="sbadge ${r.status}">${statusLabel(r.status)}</span>
-        <span class="arc-date mono">🗓 ${esc(r.journeyDate)}${r.journeyTime?" · "+esc(r.journeyTime):""}</span>
+        <span class="arc-date mono">🗓 ${esc(r.journeyDate)}${r.journeyTime?" "+esc(r.journeyTime):""}${r.journeyToDate?" → "+esc(r.journeyToDate)+(r.journeyToTime?" "+esc(r.journeyToTime):""):""}</span>
       </div>
       ${warn24?`<div style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:7px 10px;margin-bottom:10px;font-size:12px;color:#fcd34d">⚠️ Journey within 24 hours! Please update vehicle details immediately.</div>`:""}
       <div class="arc-exec">
@@ -1117,9 +1127,10 @@ window.openEditModal=function(key){
   ge("eAgency").value=r.agencyName||"";
   ge("eJourneyDate").value=r.journeyDate||"";
   ge("eJourneyTime").value=r.journeyTime||"";
+  ge("eJourneyToDate").value=r.journeyToDate||"";
+  ge("eJourneyToTime").value=r.journeyToTime||"";
   ge("ePurpose").value=r.purpose||"";
   ge("eNotes").value=r.notes||"";
-  // populate vehicle type dropdown
   const sel=ge("eVehType");
   sel.innerHTML=`<option value="">— Select —</option>`+allVehTypes.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("");
   sel.value=r.vehicleType||"";
@@ -1131,17 +1142,17 @@ window.doEditRequest=async function(){
   const execDesig=ge("eExecDesig").value.trim();
   const agencyName=ge("eAgency").value;
   const journeyDate=ge("eJourneyDate").value;
-  if(!execName||!execDesig||!agencyName||!journeyDate){toast("Fill required fields","error");return;}
-  const agent=AGENTS.find(a=>a.agencyName===agencyName);
+  const journeyToDate=ge("eJourneyToDate").value;
+  if(!execName||!execDesig||!agencyName||!journeyDate||!journeyToDate){toast("Fill all required fields","error");return;}
+  if(journeyToDate<journeyDate){toast("To Date cannot be before From Date","error");return;}
+  const agent=agentsData.find(a=>a.agencyName===agencyName)||AGENTS.find(a=>a.agencyName===agencyName);
   await update(ref(db,"requests/"+editTargetKey),{
-    execName,
-    execDesig,
+    execName,execDesig,
     execContact:ge("eExecContact").value.trim(),
-    agencyName,
-    agentUserId:agent?.userId||null,
+    agencyName,agentUserId:agent?.userId||null,
     vehicleType:ge("eVehType").value,
-    journeyDate,
-    journeyTime:ge("eJourneyTime").value,
+    journeyDate,journeyTime:ge("eJourneyTime").value,
+    journeyToDate,journeyToTime:ge("eJourneyToTime").value,
     purpose:ge("ePurpose").value.trim(),
     notes:ge("eNotes").value.trim(),
   });
@@ -1153,11 +1164,15 @@ window.doEditRequest=async function(){
 let agentsData=[...AGENTS]; // live copy, synced from Firebase
 
 async function initAgentsData(){
-  const snap=await get(ref(db,"agentsData"));
-  if(!snap.exists()){
-    const obj={};
-    AGENTS.forEach(a=>{ obj[a.userId]={...a}; });
-    await set(ref(db,"agentsData"),obj);
+  // Always ensure all 5 agents exist in Firebase
+  for(const a of AGENTS){
+    const snap=await get(ref(db,"agentsData/"+a.userId));
+    if(!snap.exists()){
+      await set(ref(db,"agentsData/"+a.userId),{
+        userId:a.userId, agencyName:a.agencyName,
+        name:a.name, contact:a.contact||""
+      });
+    }
   }
 }
 await initAgentsData();
@@ -1271,14 +1286,26 @@ window.renderCalendar=function(){
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const daysInPrev=new Date(calYear,calMonth,0).getDate();
   const tod=toDS(new Date());
+  // Count bookings per date (including multi-day spans)
   const jDates={};
-  Object.values(allRequests).forEach(r=>{if(r.journeyDate)jDates[r.journeyDate]=(jDates[r.journeyDate]||0)+1;});
+  Object.values(allRequests).forEach(r=>{
+    if(!r.journeyDate) return;
+    const start=new Date(r.journeyDate);
+    const end=r.journeyToDate?new Date(r.journeyToDate):start;
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+      const ds=toDS(d);
+      jDates[ds]=(jDates[ds]||0)+1;
+    }
+  });
   let html="";
   for(let i=firstDay-1;i>=0;i--)html+=`<div class="cal-day other-month">${daysInPrev-i}</div>`;
   for(let d=1;d<=daysInMonth;d++){
     const ds=calYear+"-"+String(calMonth+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
-    const isT=ds===tod,hasT=jDates[ds]>0;
-    html+=`<div class="cal-day${isT?" today":""}${hasT?" has-trip":""}" onclick="showDayTrips('${ds}')">${d}${hasT?`<div class="cal-dot"></div>`:""}</div>`;
+    const isT=ds===tod,cnt=jDates[ds]||0,hasT=cnt>0;
+    html+=`<div class="cal-day${isT?" today":""}${hasT?" has-trip":""}" onclick="showDayTrips('${ds}')" style="position:relative">
+      <span>${d}</span>
+      ${hasT?`<span style="position:absolute;bottom:3px;font-size:9px;font-weight:800;color:${isT?"#fff":"#6ee7b7"};line-height:1">${cnt}</span>`:""}
+    </div>`;
   }
   const total=Math.ceil((firstDay+daysInMonth)/7)*7;
   for(let d=1;d<=total-firstDay-daysInMonth;d++)html+=`<div class="cal-day other-month">${d}</div>`;
@@ -1396,13 +1423,22 @@ window.renderAgentCalendar=function(){
   const myDates={};
   Object.values(allRequests)
     .filter(r=>r.agentUserId===currentUser.userId&&["booked","confirmed","completed"].includes(r.status))
-    .forEach(r=>{if(r.journeyDate)myDates[r.journeyDate]=(myDates[r.journeyDate]||0)+1;});
+    .forEach(r=>{
+      const start=new Date(r.journeyDate);
+      const end=r.journeyToDate?new Date(r.journeyToDate):start;
+      for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+        const ds=toDS(d); myDates[ds]=(myDates[ds]||0)+1;
+      }
+    });
   let html="";
   for(let i=firstDay-1;i>=0;i--)html+=`<div class="cal-day other-month">${daysInPrev-i}</div>`;
   for(let d=1;d<=daysInMonth;d++){
     const ds=agentCalYear+"-"+String(agentCalMonth+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
-    const isT=ds===tod,hasT=myDates[ds]>0;
-    html+=`<div class="cal-day${isT?" today":""}${hasT?" has-trip":""}" onclick="showAgentDayTrips('${ds}')">${d}${hasT?`<div class="cal-dot"></div>`:""}</div>`;
+    const isT=ds===tod,cnt=myDates[ds]||0,hasT=cnt>0;
+    html+=`<div class="cal-day${isT?" today":""}${hasT?" has-trip":""}" onclick="showAgentDayTrips('${ds}')" style="position:relative">
+      <span>${d}</span>
+      ${hasT?`<span style="position:absolute;bottom:3px;font-size:9px;font-weight:800;color:${isT?"#fff":"#6ee7b7"};line-height:1">${cnt}</span>`:""}
+    </div>`;
   }
   const total=Math.ceil((firstDay+daysInMonth)/7)*7;
   for(let d=1;d<=total-firstDay-daysInMonth;d++)html+=`<div class="cal-day other-month">${d}</div>`;
