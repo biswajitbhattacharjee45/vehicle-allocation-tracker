@@ -791,10 +791,7 @@ onValue(ref(db,"requests"),snap=>{
 onValue(ref(db,"passwords"),snap=>{
   userPassMap={};
   snap.forEach(c=>{userPassMap[c.key]=c.val()});
-  // Always re-render user mgmt if tab is visible or user is admin
-  if(currentUser?.role==="admin"){
-    renderUserMgmt();
-  }
+  if(currentUser?.role==="admin") window.renderUserMgmt();
 });
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -890,7 +887,11 @@ function refreshView(){
     ge("adminTabs").style.display="flex";
     ge("agentView").style.display="none";
     ge("appMain").style.display="block";
-    showTab("dashTab");renderDash();renderAdminRequests();
+    showTab("dashTab");
+    renderDash();
+    renderAdminRequests();
+    renderUserMgmt();
+    renderVehTypes();
   } else {
     ge("adminTabs").style.display="none";
     ge("appMain").style.display="none";
@@ -1106,8 +1107,10 @@ window.doEditRequest=async function(){
 };
 
 // ── USER MANAGEMENT ───────────────────────────────────────────────────────────
-function renderUserMgmt(){
-  ge("adminUserCards").innerHTML=ADMINS.map(a=>{
+window.renderUserMgmt=function(){
+  const ac=ge("adminUserCards"),ag2=ge("agentUserCards");
+  if(!ac||!ag2) return;
+  ac.innerHTML=ADMINS.map(a=>{
     return`<div class="user-card">
       <div class="user-card-header">
         <div><div class="user-card-name">${esc(a.name)}</div><div class="user-card-meta mono">${esc(a.userId)}</div></div>
@@ -1119,7 +1122,7 @@ function renderUserMgmt(){
     </div>`;
   }).join("");
 
-  ge("agentUserCards").innerHTML=AGENTS.map(ag=>{
+  ag2.innerHTML=AGENTS.map(ag=>{
     const pd=userPassMap[ag.userId]||{};
     const dis=pd.disabled||false;
     const cnt=Object.values(allRequests).filter(r=>r.agentUserId===ag.userId).length;
@@ -1140,7 +1143,7 @@ function renderUserMgmt(){
       </div>
     </div>`;
   }).join("");
-}
+};
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
 window.renderCalendar=function(){
@@ -1217,11 +1220,12 @@ onValue(ref(db,"vehicleTypes"),snap=>{
 });
 
 function refreshVehTypeDropdowns(){
-  ["reqVehType","agentVehType"].forEach(id=>{
+  const opts=`<option value="">— Select Vehicle Type —</option>`+allVehTypes.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("");
+  ["reqVehType","agentVehType","eVehType"].forEach(id=>{
     const sel=ge(id); if(!sel) return;
     const cur=sel.value;
-    sel.innerHTML=`<option value="">— Select Vehicle Type —</option>`+allVehTypes.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("");
-    sel.value=cur;
+    sel.innerHTML=opts;
+    if(cur) sel.value=cur;
   });
 }
 
