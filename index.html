@@ -1179,22 +1179,19 @@ window.doEditRequest=async function(){
   toast("Request updated successfully!","success");
 };
 
-// ── AGENTS DATA (Firebase-backed, seeded from AGENTS array) ──────────────────
-let agentsData=[...AGENTS]; // live copy, synced from Firebase
+// ── AGENTS DATA (Firebase-backed, always force-seeded) ───────────────────────
+let agentsData=[...AGENTS];
 
 async function initAgentsData(){
-  // Force-ensure every default agent exists in Firebase
-  const writes=AGENTS.map(a=>
-    get(ref(db,"agentsData/"+a.userId)).then(snap=>{
-      if(!snap.exists()){
-        return set(ref(db,"agentsData/"+a.userId),{
-          userId:a.userId,agencyName:a.agencyName,
-          name:a.name,contact:a.contact||""
-        });
-      }
-    })
-  );
-  await Promise.all(writes);
+  // Always write all 5 agents — no existence check, guaranteed to be there
+  for(const a of AGENTS){
+    await set(ref(db,"agentsData/"+a.userId),{
+      userId:a.userId,
+      agencyName:a.agencyName,
+      name:a.name,
+      contact:a.contact||""
+    });
+  }
 }
 await initAgentsData();
 
