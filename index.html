@@ -234,20 +234,20 @@ thead th{
 }
 tbody tr{border-bottom:1px solid rgba(255,255,255,.06);transition:background .15s}
 tbody tr:hover{background:linear-gradient(135deg,#2d0075,#3d1090)}
-tbody td{padding:11px 13px;vertical-align:middle;color:#f0e8ff;font-size:13.5px;font-family:'DM Sans',sans-serif}
+tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px;font-family:'DM Sans',sans-serif}
 .exec-name{font-family:'Playfair Display',serif;font-weight:700;font-size:14px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)}
-.sub-text{font-size:11.5px;color:rgba(220,190,255,.7);margin-top:2px;font-weight:500}
+.sub-text{font-size:11.5px;color:rgba(210,180,255,.85);margin-top:2px;font-weight:500}
 
 /* STATUS BADGES */
 .sbadge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:10.5px;font-weight:700;white-space:nowrap;letter-spacing:.02em}
-.sbadge.pending   {background:rgba(251,191,36,.2);color:#fde68a;border:1px solid rgba(251,191,36,.45)}
+.sbadge.pending   {background:rgba(251,191,36,.25);color:#fef08a;border:1px solid rgba(251,191,36,.6);text-shadow:0 0 8px rgba(251,191,36,.4)}
 .sbadge.assigned  {background:rgba(124,58,237,.2);color:#c4b5fd;border:1px solid rgba(124,58,237,.4)}
-.sbadge.booked    {background:rgba(6,182,212,.2);color:#67e8f9;border:1px solid rgba(6,182,212,.45)}
-.sbadge.confirmed {background:rgba(16,185,129,.2);color:#6ee7b7;border:1px solid rgba(16,185,129,.45)}
-.sbadge.completed {background:rgba(156,163,175,.15);color:#d1d5db;border:1px solid rgba(156,163,175,.3)}
+.sbadge.booked    {background:rgba(6,182,212,.25);color:#a5f3fc;border:1px solid rgba(34,211,238,.6);text-shadow:0 0 8px rgba(6,182,212,.4)}
+.sbadge.confirmed {background:rgba(16,185,129,.25);color:#a7f3d0;border:1px solid rgba(52,211,153,.6);text-shadow:0 0 8px rgba(16,185,129,.4)}
+.sbadge.completed {background:rgba(156,163,175,.2);color:#e5e7eb;border:1px solid rgba(156,163,175,.45)}
 
 .agency-chip{
-  background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);
+  background:rgba(168,85,247,.35);color:#e9d5ff;border:1px solid rgba(168,85,247,.55);
   border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:700;white-space:nowrap;
 }
 
@@ -300,19 +300,19 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#f0e8ff;font-size:13.5px;
   background:rgba(124,58,237,.12);border:1px solid rgba(168,85,247,.2);
   border-radius:8px;padding:5px 14px;color:#fff;cursor:pointer;font-size:17px;font-family:'DM Sans',sans-serif;transition:background .2s;
 }
-.cal-nav:hover{background:#e8d5ff}
+.cal-nav:hover{background:rgba(168,85,247,.4)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-.cal-dow{text-align:center;font-size:10.5px;font-weight:800;color:#5b21b6;letter-spacing:.06em;padding:5px 0;text-transform:uppercase;letter-spacing:.05em}
+.cal-dow{text-align:center;font-size:10.5px;font-weight:800;color:rgba(216,180,254,.7);letter-spacing:.06em;padding:5px 0;text-transform:uppercase;letter-spacing:.05em}
 .cal-day{
   aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;color:#2d0060;
+  border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:700;color:#e9d5ff;
   position:relative;transition:all .15s;
 }
 .cal-day.other-month{color:rgba(168,85,247,.2);cursor:default}
 .cal-day.today{background:rgba(124,58,237,.4);border:1.5px solid rgba(168,85,247,.6);color:#fff;font-weight:800}
-.cal-day.has-trip{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);color:#6ee7b7}
+.cal-day.has-trip{background:rgba(16,185,129,.25);border:1px solid rgba(52,211,153,.5);box-shadow:0 0 10px rgba(16,185,129,.2);color:#6ee7b7}
 .cal-day.has-trip.today{background:rgba(124,58,237,.5);border:1.5px solid #a855f7;color:#fff}
-.cal-day:hover:not(.other-month){background:rgba(109,40,217,.1);border:1px solid rgba(109,40,217,.25);color:#fff}
+.cal-day:hover:not(.other-month){background:rgba(168,85,247,.25);border:1px solid rgba(168,85,247,.4);color:#fff}
 .cal-dot{width:5px;height:5px;border-radius:50%;background:#6ee7b7;position:absolute;bottom:4px}
 .cal-legend{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
 .cal-legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:rgba(109,40,217,.55)}
@@ -336,7 +336,7 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#f0e8ff;font-size:13.5px;
 .toggle-btn.disabled:hover{background:rgba(239,68,68,.22)}
 
 /* AGENT VIEW */
-#agentView{display:none;padding:16px;max-width:640px;margin:0 auto;background:#ffffff}
+#agentView{display:none;padding:16px;max-width:640px;margin:0 auto;background:#fff}
 .agent-req-card{
   background:rgba(30,21,64,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid rgba(168,85,247,.15);border-radius:var(--radius);padding:16px;margin-bottom:14px;transition:transform .2s,border-color .2s;
@@ -442,7 +442,7 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#f0e8ff;font-size:13.5px;
       <p>SBI LHO Guwahati — Liaison Office</p>
     </div>
 
-    <div class="login-tabs">
+    <div class="login-tabs" style="display:none">
       <button class="login-tab active" onclick="switchTab('loginPanel',this)">Login</button>
       <button class="login-tab" onclick="switchTab('changePwdPanel',this)">Change Password</button>
     </div>
@@ -459,10 +459,17 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#f0e8ff;font-size:13.5px;
                onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <button class="btn-primary" onclick="doLogin()">🔐 Login</button>
+      <p style="text-align:center;margin-top:14px;font-size:12.5px;color:rgba(220,190,255,.65)">
+        Want to change password?
+        <button onclick="switchTab('changePwdPanel',null)" style="background:none;border:none;color:#c4b5fd;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif">Click here</button>
+      </p>
     </div>
 
     <!-- Change Password -->
-    <div id="changePwdPanel" style="position:relative;z-index:1" style="display:none">
+    <div id="changePwdPanel" style="display:none;position:relative;z-index:1">
+      <p style="text-align:center;margin-bottom:14px;font-size:12.5px;color:rgba(220,190,255,.65)">
+        <button onclick="switchTab('loginPanel',null)" style="background:none;border:none;color:#c4b5fd;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif">← Back to Login</button>
+      </p>
       <div class="field"><label>User ID <span class="req">✱</span></label><input id="cpUid" type="text" placeholder="Your user ID"/></div>
       <div class="field"><label>Current Password <span class="req">✱</span></label><input id="cpOld" type="password" placeholder="Current password"/></div>
       <div class="field"><label>New Password <span class="req">✱</span></label><input id="cpNew" type="password" placeholder="New password (min 6 chars)"/></div>
@@ -615,9 +622,9 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#f0e8ff;font-size:13.5px;
     </div>
 
     <!-- CALENDAR -->
-    <div class="tab-content" id="calTab">
+    <div class="tab-content" id="calTab" style="background:#fff;border-radius:16px">
       <div class="gcard">
-        <div class="gcard-title">🗓 Journey Calendar</div>
+        <div class="gcard-title" style="font-size:16px;color:#fff;letter-spacing:.02em">🗓 Journey Calendar</div>
         <div class="cal-header">
           <button class="cal-nav" onclick="calPrev()">‹</button>
           <h3 id="calMonthLabel"></h3>
@@ -634,7 +641,7 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#f0e8ff;font-size:13.5px;
         </div>
       </div>
       <div class="gcard" id="calDayTrips" style="display:none">
-        <div class="gcard-title" id="calDayTitle"></div>
+        <div class="gcard-title" id="calDayTitle" style="color:#fff;font-size:14px"></div>
         <div id="calDayList"></div>
       </div>
     </div>
@@ -1449,7 +1456,7 @@ window.showDayTrips=function(ds){
   const d=new Date(ds+"T00:00:00");
   ge("calDayTitle").textContent="Trips on "+d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+" ("+trips.length+" booking"+(trips.length!==1?"s":"")+")" ;
   ge("calDayList").innerHTML=trips.length?trips.map(r=>`
-    <div class="recent-item">
+    <div class="recent-item" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)">
       <div class="recent-top">
         <span class="sbadge ${r.status}">${statusLabel(r.status)}</span>
         <strong>${esc(r.execName)}</strong>
