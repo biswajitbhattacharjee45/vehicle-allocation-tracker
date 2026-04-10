@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Vehicle Allocation Tracker — SBI LHO Guwahati</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
@@ -576,15 +576,7 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px;fon
         <input id="adminSearch" type="search" placeholder="🔍  Search by name, agency, vehicle, status…" oninput="renderAdminRequests()"/>
         <span id="reqCount">0 records</span>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th>Status</th><th>Executive</th><th>Agency</th>
-            <th>Journey Date</th><th>Purpose</th><th>Vehicle / Driver</th><th>Actions</th>
-          </tr></thead>
-          <tbody id="reqTableBody"><tr><td colspan="7" class="empty-msg">Loading…</td></tr></tbody>
-        </table>
-      </div>
+      <div id="reqCardList"></div>
     </div>
 
     <!-- NEW REQUEST -->
@@ -815,6 +807,31 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px;fon
       <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
       <button class="btn-primary" style="flex:1;margin-top:0" onclick="doEditRequest()">💾 Save Changes</button>
     </div>
+  </div>
+</div>
+
+<!-- Booking Detail Full-Screen Modal -->
+<div class="modal-overlay" id="bookingDetailModal" style="padding:0;align-items:flex-end">
+  <div id="bookingDetailBox" style="
+    width:100%;max-width:600px;margin:0 auto;
+    background:linear-gradient(160deg,#12002e,#1e0050,#2d0075,#3d0d90);
+    border:1px solid rgba(140,80,255,.45);
+    border-top:1px solid rgba(180,140,255,.6);
+    border-radius:24px 24px 0 0;
+    padding:0 0 40px;
+    max-height:92vh;overflow-y:auto;
+    box-shadow:0 -8px 40px rgba(20,0,60,.5);
+  ">
+    <!-- Handle bar -->
+    <div style="text-align:center;padding:12px 0 4px">
+      <div style="width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);margin:0 auto"></div>
+    </div>
+    <!-- Close btn -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px">
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:#fff">Booking Details</div>
+      <button onclick="closeBookingDetail()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:13px;font-weight:700;padding:5px 14px;cursor:pointer;font-family:'DM Sans',sans-serif">✕ Close</button>
+    </div>
+    <div id="bookingDetailContent" style="padding:0 20px"></div>
   </div>
 </div>
 
@@ -1081,39 +1098,40 @@ function renderAdminRequests(){
   if(search)reqs=reqs.filter(r=>[r.execName,r.execDesig,r.execContact,r.agencyName,r.driverName,r.vehicleNo,r.purpose,r.status].join(" ").toLowerCase().includes(search));
   reqs.sort((a,b)=>a.journeyDate>b.journeyDate?1:-1);
   ge("reqCount").textContent=reqs.length+" record"+(reqs.length!==1?"s":"");
-  ge("reqTableBody").innerHTML=reqs.length?reqs.map(r=>`
-    <tr style="background:linear-gradient(160deg,#1a0040,#2d0070,#3d1090);border-bottom:1px solid rgba(140,80,255,.2)">
-      <td style="color:#fff"><span class="sbadge ${r.status}">${statusLabel(r.status)}</span></td>
-      <td style="color:#fff">
-        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:13.5px;color:#fff">${esc(r.execName)}</div>
-        <div style="font-size:11px;color:rgba(210,180,255,.9);margin-top:2px;font-weight:500">${esc(r.execDesig||"")}</div>
-        <div style="font-size:11px;color:rgba(210,180,255,.8);margin-top:1px" class="mono">${esc(r.execContact||"")}</div>
-      </td>
-      <td style="color:#fff"><span style="background:rgba(168,85,247,.35);color:#e9d5ff;border:1px solid rgba(168,85,247,.55);border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:700;white-space:nowrap">${esc(r.agencyName||"—")}</span></td>
-      <td style="color:#e9d5ff;font-family:'JetBrains Mono',monospace;font-size:12px">
-        ${esc(r.journeyDate)}<br>
-        <span style="opacity:.7;font-size:10.5px">${esc(r.journeyTime||"")}</span>
-        ${r.journeyToDate&&r.journeyToDate!==r.journeyDate?`<br><span style="opacity:.6;font-size:10px">→ ${esc(r.journeyToDate)} ${esc(r.journeyToTime||"")}</span>`:""}
-      </td>
-      <td style="max-width:130px;word-break:break-word;font-size:13px;color:#e9d5ff">${esc(r.purpose||"—")}</td>
-      <td style="color:#fff">
-        ${r.vehicleNo?`
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#fff;font-weight:600">${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</div>
-          <div style="font-size:11px;color:rgba(210,180,255,.9);margin-top:2px">${esc(r.driverName||"")}${r.driverContact?" · "+esc(r.driverContact):""}</div>
-          ${r.driverContact?`<a href="tel:${esc(r.driverContact)}" style="display:inline-flex;align-items:center;gap:4px;margin-top:5px;padding:4px 10px;background:rgba(16,185,129,.25);border:1px solid rgba(52,211,153,.5);border-radius:6px;color:#a7f3d0;font-size:11px;font-weight:700;text-decoration:none">📞 Call</a>`:""}
-          ${r.bookingComment?`<div style="font-size:11px;color:#67e8f9;margin-top:3px">💬 ${esc(r.bookingComment)}</div>`:""}
-        `:`
-          ${r.bookingComment?`<div style="font-size:11px;color:#67e8f9">💬 ${esc(r.bookingComment)}</div>`:`<span style="font-size:11.5px;color:rgba(210,180,255,.7)">Awaiting agent</span>`}
-        `}
-      </td>
-      <td>
-        <div class="action-btns">
+  const list=ge("reqCardList");
+  if(!list) return;
+  list.innerHTML=reqs.length?reqs.map(r=>`
+    <div onclick="openBookingDetail('${r._key}')" style="
+      background:linear-gradient(160deg,#1a0040,#2d0070,#3d1090);
+      border:1px solid rgba(140,80,255,.3);
+      border-top:1px solid rgba(180,120,255,.45);
+      border-radius:14px;padding:14px 16px;margin-bottom:10px;
+      box-shadow:0 4px 16px rgba(40,0,100,.2);
+      cursor:pointer;transition:transform .15s,box-shadow .15s;
+      -webkit-tap-highlight-color:rgba(168,85,247,.2);
+    " onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(40,0,100,.35)'"
+       onmouseleave="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(40,0,100,.2)'">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <span class="sbadge ${r.status}">${statusLabel(r.status)}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(210,180,255,.8)">🗓 ${esc(r.journeyDate)}${r.journeyTime?" · "+esc(r.journeyTime):""}</span>
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#fff">${esc(r.execName)}</div>
+      <div style="font-size:11.5px;color:rgba(210,180,255,.8);margin-top:3px;font-weight:500">${esc(r.execDesig||"")} ${r.execContact?"· "+esc(r.execContact):""}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:8px">
+        <span style="background:rgba(168,85,247,.3);color:#e9d5ff;border:1px solid rgba(168,85,247,.5);border-radius:6px;padding:3px 10px;font-size:11.5px;font-weight:700">${esc(r.agencyName||"—")}</span>
+        ${r.vehicleNo?
+          `<span style="font-size:11.5px;color:rgba(210,180,255,.85);font-family:'JetBrains Mono',monospace">🚘 ${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</span>`:
+          `<span style="font-size:11.5px;color:rgba(210,180,255,.55)">Awaiting vehicle details</span>`}
+      </div>
+      <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:11px;color:rgba(168,85,247,.7)">Tap for full details →</span>
+        <div onclick="event.stopPropagation()" style="display:flex;gap:6px">
           ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓</button>`:""}
           <button class="btn-sm btn-edit" onclick="openEditModal('${r._key}')">✏️</button>
           <button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕</button>
         </div>
-      </td>
-    </tr>`).join(""):`<tr><td colspan="7" class="empty-msg" style="color:rgba(210,180,255,.6)">No records found.</td></tr>`;
+      </div>
+    </div>`).join(""):`<div style="text-align:center;padding:40px 0;color:rgba(109,40,217,.5);font-size:14px">No records found.</div>`;
 }
 
 window.saveRequest=async function(){
@@ -1251,7 +1269,59 @@ function renderAgentView(){
   }).join(""):`<p class="empty-msg" style="padding:40px 0">No requests assigned to you yet.<br><span style="font-size:12px;opacity:.5">Requests will appear here once admin assigns them.</span></p>`;
 }
 
-// ── EDIT REQUEST ──────────────────────────────────────────────────────────────
+// ── BOOKING DETAIL FULL-SCREEN ────────────────────────────────────────────────
+window.openBookingDetail=function(key){
+  const r=allRequests[key]; if(!r) return;
+  const row=(label,val,color)=>`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid rgba(168,85,247,.15)">
+      <span style="font-size:12px;font-weight:700;color:rgba(210,180,255,.65);text-transform:uppercase;letter-spacing:.06em;min-width:110px">${label}</span>
+      <span style="font-size:13.5px;font-weight:600;color:${color||"#fff"};text-align:right;flex:1">${val||"—"}</span>
+    </div>`;
+  ge("bookingDetailContent").innerHTML=`
+    <div style="margin-bottom:16px">
+      <span class="sbadge ${r.status}" style="font-size:12px;padding:5px 14px">${statusLabel(r.status)}</span>
+    </div>
+    <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#fff;margin-bottom:4px">${esc(r.execName)}</div>
+    <div style="font-size:13px;color:rgba(210,180,255,.75);margin-bottom:20px;font-weight:500">${esc(r.execDesig||"")}${r.execContact?" · "+esc(r.execContact):""}</div>
+
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:4px 14px;margin-bottom:16px">
+      ${row("Agency",esc(r.agencyName||"—"),"#e9d5ff")}
+      ${row("Vehicle Type",esc(r.vehicleType||"—"),"#c4b5fd")}
+      ${row("From",esc(r.journeyDate)+(r.journeyTime?" · "+esc(r.journeyTime):""),"#a5f3fc")}
+      ${row("To",r.journeyToDate?esc(r.journeyToDate)+(r.journeyToTime?" · "+esc(r.journeyToTime):""):"Same day","#a5f3fc")}
+      ${row("Purpose",esc(r.purpose||"—"),"#e9d5ff")}
+      ${r.notes?row("Notes",esc(r.notes),"rgba(210,180,255,.8)"):""}
+    </div>
+
+    ${r.vehicleNo?`
+    <div style="background:rgba(16,185,129,.1);border:1px solid rgba(52,211,153,.3);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:800;color:rgba(52,211,153,.8);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">🚘 Vehicle & Driver</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#fff;margin-bottom:6px">${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</div>
+      <div style="font-size:13px;color:rgba(210,180,255,.9);margin-bottom:4px">👤 ${esc(r.driverName||"—")}</div>
+      ${r.driverBadge?`<div style="font-size:12px;color:rgba(210,180,255,.7);margin-bottom:8px">🪪 Badge: ${esc(r.driverBadge)}</div>`:""}
+      ${r.driverContact?`<a href="tel:${esc(r.driverContact)}" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(16,185,129,.25);border:1px solid rgba(52,211,153,.5);border-radius:10px;color:#a7f3d0;font-size:14px;font-weight:700;text-decoration:none;font-family:'DM Sans',sans-serif;margin-top:4px">📞 Call Driver — ${esc(r.driverContact)}</a>`:""}
+    </div>`:`
+    <div style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);border-radius:12px;padding:14px;margin-bottom:16px;text-align:center">
+      <div style="font-size:13px;color:rgba(210,180,255,.7)">⏳ Awaiting vehicle & driver details from agent</div>
+    </div>`}
+
+    ${r.bookingComment?`
+    <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:12px;padding:12px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#67e8f9;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">💬 Agent Comment</div>
+      <div style="font-size:13px;color:#a5f3fc">${esc(r.bookingComment)}</div>
+    </div>`:""}
+
+    <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap">
+      ${r.status!=="completed"?`<button class="btn-primary" style="flex:1;margin-top:0;padding:12px;font-size:14px" onclick="markCompleted('${key}');closeBookingDetail()">✓ Mark Completed</button>`:""}
+      <button onclick="closeBookingDetail();setTimeout(()=>openEditModal('${key}'),200)" style="flex:1;padding:12px;background:rgba(168,85,247,.25);border:1px solid rgba(168,85,247,.45);border-radius:11px;color:#e9d5ff;font-family:'Playfair Display',serif;font-size:14px;font-weight:700;cursor:pointer">✏️ Edit</button>
+    </div>
+    <button onclick="if(confirm('Delete this request?')){deleteReq('${key}');closeBookingDetail()}" style="width:100%;margin-top:10px;padding:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">🗑 Delete Request</button>
+  `;
+  ge("bookingDetailModal").classList.add("open");
+};
+window.closeBookingDetail=function(){
+  ge("bookingDetailModal").classList.remove("open");
+};
 let editTargetKey=null;
 window.openEditModal=function(key){
   const r=allRequests[key]; if(!r) return;
