@@ -818,14 +818,14 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px;fon
       </div>
       <div class="field"><label>From Date <span class="req">✱</span></label><input id="eJourneyDate" type="date"/></div>
       <div class="field"><label>From Time</label><input id="eJourneyTime" type="time"/></div>
-      <div class="field"><label>To Date <span class="req">✱</span></label><input id="eJourneyToDate" type="date"/></div>
+      <div class="field"><label>To Date <span class="req">✱</span></label><input id="eJourneyToDate" type="date" onchange="checkExtension()"/></div>
       <div class="field"><label>To Time</label><input id="eJourneyToTime" type="time"/></div>
       <div class="field full"><label>Purpose</label><input id="ePurpose" type="text"/></div>
       <div class="field full"><label>Notes</label><textarea id="eNotes" style="min-height:56px"></textarea></div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
-      <button class="btn-primary" style="flex:1;margin-top:0" onclick="doEditRequest()">💾 Save Changes</button>
+      <div id="editExtensionNote" style="display:none;padding:10px 14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:8px;font-size:12px;color:#047857;font-weight:600;margin-bottom:8px;">💡 <b>Extension detected</b> — setting a future To Date will reactivate this booking automatically.</div><button class="btn-primary" style="flex:1;margin-top:0" onclick="doEditRequest()">💾 Save Changes</button>
     </div>
   </div>
 </div>
@@ -937,8 +937,28 @@ let resetTargetId=null;
 onValue(ref(db,"requests"),snap=>{
   allRequests={};
   snap.forEach(c=>{allRequests[c.key]={...c.val(),_key:c.key}});
+  autoMarkCompleted();          // auto-complete past journeys
   if(currentUser) refreshView();
 });
+
+// Auto-mark bookings as completed when journeyToDate has passed
+async function autoMarkCompleted(){
+  const todayStr = new Date().toISOString().slice(0,10); // "YYYY-MM-DD"
+  const toMark = Object.values(allRequests).filter(r=>
+    r.status !== "completed" &&
+    r.status !== "pending" &&
+    r.journeyToDate &&
+    r.journeyToDate < todayStr
+  );
+  for(const r of toMark){
+    await update(ref(db,"requests/"+r._key),{
+      status:"completed",
+      completedAt: r.journeyToDate,
+      autoCompleted: true,
+      previousStatus: r.status      // remember original status for possible extension
+    });
+  }
+}
 onValue(ref(db,"passwords"),snap=>{
   userPassMap={};
   snap.forEach(c=>{userPassMap[c.key]=c.val()});
@@ -1125,7 +1145,7 @@ function buildReqCard(r){
      onmouseleave="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(109,40,217,.07)'">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
       <span class="sbadge ${r.status}" style="background:${r.status==='confirmed'?'rgba(16,185,129,.1)':r.status==='completed'?'rgba(107,114,128,.1)':r.status==='booked'?'rgba(14,165,233,.1)':r.status==='assigned'?'rgba(124,58,237,.1)':'rgba(245,158,11,.1)'};color:${r.status==='confirmed'?'#047857':r.status==='completed'?'#4b5563':r.status==='booked'?'#0369a1':r.status==='assigned'?'#5b21b6':'#b45309'};border-color:${r.status==='confirmed'?'rgba(16,185,129,.3)':r.status==='completed'?'rgba(107,114,128,.25)':r.status==='booked'?'rgba(14,165,233,.3)':r.status==='assigned'?'rgba(124,58,237,.25)':'rgba(245,158,11,.35)'};text-shadow:none">${statusLabel(r.status)}</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(80,40,140,.85);font-weight:700">🗓 ${esc(r.journeyDate)}${r.journeyTime?" · "+esc(r.journeyTime):""}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(80,40,140,.85);font-weight:700">🗓 ${esc(r.journeyDate)}${r.journeyTime?" · "+esc(r.journeyTime):""}</span>${r.status==="completed"&&r.completedAt?`<span style="font-size:11px;color:#6b7280;font-weight:600;margin-left:4px;">· ✓ ${esc(r.completedAt)}</span>`:""}
     </div>
     <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:#0d0020">${esc(r.execName)}</div>
     <div style="font-size:12.5px;color:rgba(60,20,100,.8);margin-top:4px;font-weight:600">${esc(r.execDesig||"")} ${r.execContact?"· "+esc(r.execContact):""}</div>
@@ -1138,7 +1158,7 @@ function buildReqCard(r){
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(109,40,217,.08);display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:12px;color:rgba(80,40,140,.75);font-weight:700">Tap for full details →</span>
       <div onclick="event.stopPropagation()" style="display:flex;gap:6px">
-        ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓</button>`:""}
+        ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓</button>`:r.autoCompleted?`<span style="font-size:10px;color:#9ca3af;font-weight:600;padding:2px 6px;background:rgba(156,163,175,.12);border-radius:6px;border:1px solid rgba(156,163,175,.25);">🤖 Auto</span>`:""}
         <button class="btn-sm btn-edit" onclick="openEditModal('${r._key}')">✏️</button>
         <button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕</button>
       </div>
@@ -1408,8 +1428,20 @@ window.openEditModal=function(key){
   sel.innerHTML=`<option value="">— Select —</option>`+allVehTypes.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("");
   sel.value=r.vehicleType||"";
   ge("editModal").classList.add("open");
+  setTimeout(checkExtension,50); // show extension note if already completed
 };
 window.closeEditModal=function(){ge("editModal").classList.remove("open");};
+
+// Show extension note when editing completed booking and future To Date is picked
+window.checkExtension=function(){
+  const note=ge("editExtensionNote");
+  if(!note) return;
+  const orig=allRequests[editTargetKey]||{};
+  const todayStr=new Date().toISOString().slice(0,10);
+  const newTo=ge("eJourneyToDate").value;
+  note.style.display=(orig.status==="completed"&&newTo>=todayStr)?"block":"none";
+};
+
 window.doEditRequest=async function(){
   const execName=ge("eExecName").value.trim();
   const execDesig=ge("eExecDesig").value.trim();
@@ -1419,7 +1451,15 @@ window.doEditRequest=async function(){
   if(!execName||!execDesig||!agencyName||!journeyDate||!journeyToDate){toast("Fill all required fields","error");return;}
   if(journeyToDate<journeyDate){toast("To Date cannot be before From Date","error");return;}
   const agent=agentsData.find(a=>a.agencyName===agencyName)||AGENTS.find(a=>a.agencyName===agencyName);
-  await update(ref(db,"requests/"+editTargetKey),{
+  const todayStr=new Date().toISOString().slice(0,10);
+  const orig=allRequests[editTargetKey]||{};
+
+  // If editing a completed booking and new To Date is today or future → reactivate
+  const wasCompleted = orig.status==="completed";
+  const isExtension  = wasCompleted && journeyToDate >= todayStr;
+  const newStatus    = isExtension ? (orig.previousStatus||"confirmed") : orig.status;
+
+  const payload={
     execName,execDesig,
     execContact:ge("eExecContact").value.trim(),
     agencyName,agentUserId:agent?.userId||null,
@@ -1428,9 +1468,16 @@ window.doEditRequest=async function(){
     journeyToDate,journeyToTime:ge("eJourneyToTime").value,
     purpose:ge("ePurpose").value.trim(),
     notes:ge("eNotes").value.trim(),
-  });
+  };
+  if(isExtension){
+    payload.status=newStatus;
+    payload.completedAt=null;
+    payload.autoCompleted=null;
+    payload.previousStatus=null;
+  }
+  await update(ref(db,"requests/"+editTargetKey),payload);
   closeEditModal();
-  toast("Request updated successfully!","success");
+  toast(isExtension?"Booking extended & reactivated! ✓":"Request updated successfully!","success");
 };
 
 // ── AGENTS DATA (Firebase-backed, seeded from AGENTS array) ───────────────────
