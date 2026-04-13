@@ -1110,6 +1110,50 @@ function renderDash(){
 }
 
 // ── ADMIN REQUESTS ────────────────────────────────────────────────────────────
+let _completedOpen = false;
+
+function buildReqCard(r){
+  return `<div onclick="openBookingDetail('${r._key}')" style="
+    background:#fff;
+    border:1px solid rgba(109,40,217,.12);
+    border-left:4px solid ${r.status==='confirmed'?'#10b981':r.status==='completed'?'#6b7280':r.status==='booked'?'#0ea5e9':r.status==='assigned'?'#7c3aed':'#f59e0b'};
+    border-radius:12px;padding:14px 16px;margin-bottom:10px;
+    box-shadow:0 2px 8px rgba(109,40,217,.07);
+    cursor:pointer;transition:all .15s;
+    ${r.status==='completed'?'opacity:.82;':''}
+  " onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(109,40,217,.12)'"
+     onmouseleave="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(109,40,217,.07)'">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+      <span class="sbadge ${r.status}" style="background:${r.status==='confirmed'?'rgba(16,185,129,.1)':r.status==='completed'?'rgba(107,114,128,.1)':r.status==='booked'?'rgba(14,165,233,.1)':r.status==='assigned'?'rgba(124,58,237,.1)':'rgba(245,158,11,.1)'};color:${r.status==='confirmed'?'#047857':r.status==='completed'?'#4b5563':r.status==='booked'?'#0369a1':r.status==='assigned'?'#5b21b6':'#b45309'};border-color:${r.status==='confirmed'?'rgba(16,185,129,.3)':r.status==='completed'?'rgba(107,114,128,.25)':r.status==='booked'?'rgba(14,165,233,.3)':r.status==='assigned'?'rgba(124,58,237,.25)':'rgba(245,158,11,.35)'};text-shadow:none">${statusLabel(r.status)}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(80,40,140,.85);font-weight:700">🗓 ${esc(r.journeyDate)}${r.journeyTime?" · "+esc(r.journeyTime):""}</span>
+    </div>
+    <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:#0d0020">${esc(r.execName)}</div>
+    <div style="font-size:12.5px;color:rgba(60,20,100,.8);margin-top:4px;font-weight:600">${esc(r.execDesig||"")} ${r.execContact?"· "+esc(r.execContact):""}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:8px">
+      <span style="background:rgba(109,40,217,.08);color:#5b21b6;border:1px solid rgba(109,40,217,.18);border-radius:6px;padding:3px 10px;font-size:12.5px;font-weight:800">${esc(r.agencyName||"—")}</span>
+      ${r.vehicleNo?
+        `<span style="font-size:12px;color:rgba(60,20,100,.85);font-family:'JetBrains Mono',monospace;font-weight:700">🚘 ${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</span>`:
+        `<span style="font-size:12px;color:rgba(109,40,217,.6);font-weight:600">Awaiting vehicle details</span>`}
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(109,40,217,.08);display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:12px;color:rgba(80,40,140,.75);font-weight:700">Tap for full details →</span>
+      <div onclick="event.stopPropagation()" style="display:flex;gap:6px">
+        ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓</button>`:""}
+        <button class="btn-sm btn-edit" onclick="openEditModal('${r._key}')">✏️</button>
+        <button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.toggleCompletedAccordion = function(){
+  _completedOpen = !_completedOpen;
+  const body  = document.getElementById('_cAccBody');
+  const arrow = document.getElementById('_cAccArrow');
+  if(body)  body.style.display  = _completedOpen ? 'block' : 'none';
+  if(arrow) arrow.textContent   = _completedOpen ? '▾' : '▸';
+};
+
 function renderAdminRequests(){
   const search=(ge("adminSearch")?.value||"").toLowerCase();
   const sf=ge("statusFilter")?.value||"";
@@ -1117,41 +1161,45 @@ function renderAdminRequests(){
   if(sf)reqs=reqs.filter(r=>r.status===sf);
   if(search)reqs=reqs.filter(r=>[r.execName,r.execDesig,r.execContact,r.agencyName,r.driverName,r.vehicleNo,r.purpose,r.status].join(" ").toLowerCase().includes(search));
   reqs.sort((a,b)=>a.journeyDate>b.journeyDate?1:-1);
+
+  const active    = reqs.filter(r=>r.status!=='completed');
+  const completed = reqs.filter(r=>r.status==='completed');
+
   ge("reqCount").textContent=reqs.length+" record"+(reqs.length!==1?"s":"");
   const list=ge("reqCardList");
   if(!list) return;
-  list.innerHTML=reqs.length?reqs.map(r=>`
-    <div onclick="openBookingDetail('${r._key}')" style="
-      background:#fff;
-      border:1px solid rgba(109,40,217,.12);
-      border-left:4px solid ${r.status==='confirmed'?'#10b981':r.status==='completed'?'#6b7280':r.status==='booked'?'#0ea5e9':r.status==='assigned'?'#7c3aed':'#f59e0b'};
-      border-radius:12px;padding:14px 16px;margin-bottom:10px;
-      box-shadow:0 2px 8px rgba(109,40,217,.07);
-      cursor:pointer;transition:all .15s;
-      -webkit-tap-highlight-color:rgba(109,40,217,.08);
-    " onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(109,40,217,.12)'"
-       onmouseleave="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(109,40,217,.07)'">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-        <span class="sbadge ${r.status}" style="background:${r.status==='confirmed'?'rgba(16,185,129,.1)':r.status==='completed'?'rgba(107,114,128,.1)':r.status==='booked'?'rgba(14,165,233,.1)':r.status==='assigned'?'rgba(124,58,237,.1)':'rgba(245,158,11,.1)'};color:${r.status==='confirmed'?'#047857':r.status==='completed'?'#4b5563':r.status==='booked'?'#0369a1':r.status==='assigned'?'#5b21b6':'#b45309'};border-color:${r.status==='confirmed'?'rgba(16,185,129,.3)':r.status==='completed'?'rgba(107,114,128,.25)':r.status==='booked'?'rgba(14,165,233,.3)':r.status==='assigned'?'rgba(124,58,237,.25)':'rgba(245,158,11,.35)'};text-shadow:none">${statusLabel(r.status)}</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(80,40,140,.85);font-weight:700">🗓 ${esc(r.journeyDate)}${r.journeyTime?" · "+esc(r.journeyTime):""}</span>
+
+  let html='';
+
+  if(active.length){
+    html += active.map(r=>buildReqCard(r)).join('');
+  } else if(!completed.length){
+    html += `<div style="text-align:center;padding:40px 0;color:rgba(109,40,217,.5);font-size:14px">No records found.</div>`;
+  } else {
+    html += `<div style="text-align:center;padding:20px 0 8px;color:rgba(109,40,217,.5);font-size:13px;font-weight:600">No active requests.</div>`;
+  }
+
+  if(completed.length){
+    html += `
+    <div style="margin-top:18px;border-radius:12px;border:1.5px solid rgba(107,114,128,.3);overflow:hidden;">
+      <div onclick="toggleCompletedAccordion()" style="
+        display:flex;align-items:center;gap:10px;
+        padding:13px 18px;
+        background:linear-gradient(135deg,#f1f2f4,#e5e7eb);
+        cursor:pointer;user-select:none;
+        border-bottom:${_completedOpen?'1px solid rgba(107,114,128,.22)':'none'};
+      ">
+        <span id="_cAccArrow" style="font-size:15px;color:#6b7280;font-weight:900;">${_completedOpen?'▾':'▸'}</span>
+        <span style="font-size:14px;font-weight:800;color:#374151;font-family:'DM Sans',sans-serif;">🏁 Completed Journeys</span>
+        <span style="margin-left:auto;background:rgba(107,114,128,.15);color:#6b7280;border:1px solid rgba(107,114,128,.28);border-radius:20px;padding:2px 12px;font-size:12px;font-weight:700;">${completed.length} record${completed.length!==1?'s':''}</span>
       </div>
-      <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:#0d0020">${esc(r.execName)}</div>
-      <div style="font-size:12.5px;color:rgba(60,20,100,.8);margin-top:4px;font-weight:600">${esc(r.execDesig||"")} ${r.execContact?"· "+esc(r.execContact):""}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:8px">
-        <span style="background:rgba(109,40,217,.08);color:#5b21b6;border:1px solid rgba(109,40,217,.18);border-radius:6px;padding:3px 10px;font-size:12.5px;font-weight:800">${esc(r.agencyName||"—")}</span>
-        ${r.vehicleNo?
-          `<span style="font-size:12px;color:rgba(60,20,100,.85);font-family:'JetBrains Mono',monospace;font-weight:700">🚘 ${esc(r.vehicleType||"")} · ${esc(r.vehicleNo)}</span>`:
-          `<span style="font-size:12px;color:rgba(109,40,217,.6);font-weight:600">Awaiting vehicle details</span>`}
+      <div id="_cAccBody" style="display:${_completedOpen?'block':'none'};padding:12px 10px 4px;background:#fafafa;">
+        ${completed.map(r=>buildReqCard(r)).join('')}
       </div>
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(109,40,217,.08);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:12px;color:rgba(80,40,140,.75);font-weight:700">Tap for full details →</span>
-        <div onclick="event.stopPropagation()" style="display:flex;gap:6px">
-          ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓</button>`:""}
-          <button class="btn-sm btn-edit" onclick="openEditModal('${r._key}')">✏️</button>
-          <button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕</button>
-        </div>
-      </div>
-    </div>`).join(""):`<div style="text-align:center;padding:40px 0;color:rgba(109,40,217,.5);font-size:14px">No records found.</div>`;
+    </div>`;
+  }
+
+  list.innerHTML=html;
 }
 
 window.saveRequest=async function(){
