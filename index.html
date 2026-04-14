@@ -1158,9 +1158,9 @@ function buildReqCard(r){
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(109,40,217,.08);display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:12px;color:rgba(80,40,140,.75);font-weight:700">Tap for full details →</span>
       <div onclick="event.stopPropagation()" style="display:flex;gap:6px">
-        ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="markCompleted('${r._key}')">✓</button>`:r.autoCompleted?`<span style="font-size:10px;color:#9ca3af;font-weight:600;padding:2px 6px;background:rgba(156,163,175,.12);border-radius:6px;border:1px solid rgba(156,163,175,.25);">🤖 Auto</span>`:""}
-        <button class="btn-sm btn-edit" onclick="openEditModal('${r._key}')">✏️</button>
-        <button class="btn-sm btn-del" onclick="deleteReq('${r._key}')">✕</button>
+        ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="event.stopPropagation();markCompleted('${r._key}')">✓</button>`:r.autoCompleted?`<span style="font-size:10px;color:#9ca3af;font-weight:600;padding:2px 6px;background:rgba(156,163,175,.12);border-radius:6px;border:1px solid rgba(156,163,175,.25);">🤖 Auto</span>`:""}
+        <button class="btn-sm btn-edit" onclick="event.stopPropagation();openEditModal('${r._key}')">✏️</button>
+        <button class="btn-sm btn-del" onclick="event.stopPropagation();deleteReq('${r._key}')">✕</button>
       </div>
     </div>
   </div>`;
@@ -1267,7 +1267,8 @@ window.deleteReq=async function(key){
 // ── AGENT VIEW ────────────────────────────────────────────────────────────────
 function renderAgentView(){
   const myReqs=Object.values(allRequests)
-    .filter(r=>r.agentUserId===currentUser.userId)
+    .filter(r=>r.agentUserId===currentUser.userId
+      || (!r.agentUserId && r.agencyName===currentUser.agencyName))
     .sort((a,b)=>a.journeyDate>b.journeyDate?1:-1);
   ge("agentStatP").textContent=myReqs.filter(r=>["pending","assigned"].includes(r.status)).length;
   ge("agentStatB").textContent=myReqs.filter(r=>r.status==="booked").length;
@@ -1544,7 +1545,7 @@ window.renderUserMgmt=function(){
   ag2.innerHTML=displayAgents.map(ag=>{
     const pd=userPassMap[ag.userId]||{};
     const dis=pd.disabled||false;
-    const cnt=Object.values(allRequests).filter(r=>r.agentUserId===ag.userId).length;
+    const cnt=Object.values(allRequests).filter(r=>r.agentUserId===ag.userId||((!r.agentUserId)&&r.agencyName===ag.agencyName)).length;
     return`<div class="user-card">
       <div class="user-card-header">
         <div>
@@ -1775,7 +1776,7 @@ window.renderAgentCalendar=function(){
   // Only show booked/confirmed/completed for this agent
   const myDates={};
   Object.values(allRequests)
-    .filter(r=>r.agentUserId===currentUser.userId&&["booked","confirmed","completed"].includes(r.status))
+    .filter(r=>(r.agentUserId===currentUser.userId||(!r.agentUserId&&r.agencyName===currentUser.agencyName))&&["booked","confirmed","completed"].includes(r.status))
     .forEach(r=>{
       const start=new Date(r.journeyDate);
       const end=r.journeyToDate?new Date(r.journeyToDate):start;
@@ -1800,7 +1801,8 @@ window.renderAgentCalendar=function(){
 
 window.showAgentDayTrips=function(ds){
   const trips=Object.values(allRequests).filter(r=>{
-    if(r.agentUserId!==currentUser.userId) return false;
+    const mine=r.agentUserId===currentUser.userId||(!r.agentUserId&&r.agencyName===currentUser.agencyName);
+    if(!mine) return false;
     if(!r.journeyDate||!["booked","confirmed","completed"].includes(r.status)) return false;
     const end=r.journeyToDate||r.journeyDate;
     return ds>=r.journeyDate&&ds<=end;
@@ -1836,11 +1838,12 @@ window.openVehEdit=function(key){
   el.style.display=el.style.display==="none"?"block":"none";
 };
 window.updateVehicle=async function(key,journeyDate){
-  const vt=ge("evt_"+key)?.value.trim() || (allRequests[key]?.vehicleType||"");
-  const vn=ge("evn_"+key)?.value.trim();
-  const dn=ge("edn_"+key)?.value.trim();
-  const db2=ge("edb_"+key)?.value.trim();
-  const dc=ge("edc_"+key)?.value.trim();
+  // Capture ALL values synchronously before any await — prevents re-render wiping the form mid-save
+  const vt=(ge("evt_"+key)?.value||"").trim() || (allRequests[key]?.vehicleType||"");
+  const vn=(ge("evn_"+key)?.value||"").trim();
+  const dn=(ge("edn_"+key)?.value||"").trim();
+  const db2=(ge("edb_"+key)?.value||"").trim();
+  const dc=(ge("edc_"+key)?.value||"").trim();
   if(!vt||!vn||!dn||!dc){toast("Fill Vehicle Type, No., Driver Name & Contact","error");return;}
   const jDate=new Date(journeyDate);jDate.setHours(0,0,0,0);
   const now=new Date();now.setHours(0,0,0,0);
@@ -1857,8 +1860,9 @@ window.confirmBooking=async function(key){
 
 // ── CONFIRM VEHICLE (agent) ───────────────────────────────────────────────────
 window.confirmVehicle=async function(key,journeyDate){
-  const vt=(ge("vt_"+key)?.value.trim())||"",vn=ge("vn_"+key)?.value.trim();
-  const dn=ge("dn_"+key)?.value.trim(),db2=ge("db_"+key)?.value.trim(),dc=ge("dc_"+key)?.value.trim();
+  // Capture ALL values synchronously before any await
+  const vt=(ge("vt_"+key)?.value||"").trim(),vn=(ge("vn_"+key)?.value||"").trim();
+  const dn=(ge("dn_"+key)?.value||"").trim(),db2=(ge("db_"+key)?.value||"").trim(),dc=(ge("dc_"+key)?.value||"").trim();
   if(!vt||!vn||!dn||!dc){toast("Fill Vehicle Type, No., Driver Name & Contact","error");return;}
   // 24 hr check
   const jDate=new Date(journeyDate);jDate.setHours(0,0,0,0);
