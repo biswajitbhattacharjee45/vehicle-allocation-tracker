@@ -1513,11 +1513,7 @@ onValue(ref(db,"agentsData"),snap=>{
   window.renderUserMgmt();
 });
 
-onValue(ref(db,"agentsData"),snap=>{
-  agentsData=[];
-  snap.forEach(c=>agentsData.push({...c.val(),_fbKey:c.key}));
-  if(currentUser?.role==="admin") window.renderUserMgmt();
-});
+// duplicate agentsData listener removed — handled by the listener above
 
 // ── USER MANAGEMENT ───────────────────────────────────────────────────────────
 window.renderUserMgmt=function(){
@@ -1724,6 +1720,7 @@ onValue(ref(db,"vehicleTypes"),snap=>{
   allVehTypes.sort((a,b)=>a.name.localeCompare(b.name));
   refreshVehTypeDropdowns();
   window.renderVehTypes();
+  if(currentUser && currentUser.role!=="admin") renderAgentView();
 });
 
 function refreshVehTypeDropdowns(){
@@ -1839,7 +1836,7 @@ window.openVehEdit=function(key){
   el.style.display=el.style.display==="none"?"block":"none";
 };
 window.updateVehicle=async function(key,journeyDate){
-  const vt=ge("evt_"+key)?.value.trim();
+  const vt=ge("evt_"+key)?.value.trim() || (allRequests[key]?.vehicleType||"");
   const vn=ge("evn_"+key)?.value.trim();
   const dn=ge("edn_"+key)?.value.trim();
   const db2=ge("edb_"+key)?.value.trim();
@@ -1860,7 +1857,7 @@ window.confirmBooking=async function(key){
 
 // ── CONFIRM VEHICLE (agent) ───────────────────────────────────────────────────
 window.confirmVehicle=async function(key,journeyDate){
-  const vt=ge("vt_"+key)?.value.trim(),vn=ge("vn_"+key)?.value.trim();
+  const vt=(ge("vt_"+key)?.value.trim())||"",vn=ge("vn_"+key)?.value.trim();
   const dn=ge("dn_"+key)?.value.trim(),db2=ge("db_"+key)?.value.trim(),dc=ge("dc_"+key)?.value.trim();
   if(!vt||!vn||!dn||!dc){toast("Fill Vehicle Type, No., Driver Name & Contact","error");return;}
   // 24 hr check
