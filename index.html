@@ -852,6 +852,13 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px;fon
       <button onclick="closeBookingDetail()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:13px;font-weight:700;padding:5px 14px;cursor:pointer;font-family:'DM Sans',sans-serif">✕ Close</button>
     </div>
     <div id="bookingDetailContent" style="padding:0 20px"></div>
+    <!-- Share button fixed in modal HTML — never inside innerHTML -->
+    <div style="padding:0 20px 10px">
+      <button id="waShareBtn" style="width:100%;padding:14px;background:linear-gradient(135deg,#16a34a,#15803d);border:none;border-radius:12px;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.02em">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.486 2 2 6.486 2 12c0 1.783.472 3.501 1.368 5.003L2 22l5.134-1.347A9.955 9.955 0 0012 22c5.514 0 10-4.486 10-10S17.514 2 12 2zm0 18.154a8.12 8.12 0 01-4.142-1.132l-.297-.176-3.048.799.813-2.973-.193-.305A8.112 8.112 0 013.846 12C3.846 7.507 7.507 3.846 12 3.846c4.494 0 8.154 3.66 8.154 8.154 0 4.493-3.66 8.154-8.154 8.154z"/></svg>
+        Share via WhatsApp
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1401,11 +1408,6 @@ window.openBookingDetail=function(key){
       <div style="font-size:13px;color:#a5f3fc">${esc(r.bookingComment)}</div>
     </div>`:""}
 
-    <!-- WhatsApp Share Button -->
-    <button onclick="shareOnWhatsApp(document.getElementById('bookingDetailModal').dataset.key||'')" style="width:100%;margin-top:4px;padding:13px;background:linear-gradient(135deg,rgba(37,211,102,.3),rgba(18,140,60,.3));border:1px solid rgba(37,211,102,.5);border-radius:11px;color:#4ade80;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="#4ade80"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.486 2 2 6.486 2 12c0 1.783.472 3.501 1.368 5.003L2 22l5.134-1.347A9.955 9.955 0 0012 22c5.514 0 10-4.486 10-10S17.514 2 12 2zm0 18.154a8.12 8.12 0 01-4.142-1.132l-.297-.176-3.048.799.813-2.973-.193-.305A8.112 8.112 0 013.846 12C3.846 7.507 7.507 3.846 12 3.846c4.494 0 8.154 3.66 8.154 8.154 0 4.493-3.66 8.154-8.154 8.154z"/></svg>
-      💬 Share via WhatsApp
-    </button>
     <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
       ${r.status!=="completed"?`<button class="btn-primary" style="flex:1;margin-top:0;padding:12px;font-size:14px" onclick="markCompleted('${key}');closeBookingDetail()">✓ Mark Completed</button>`:""}
       <button onclick="closeBookingDetail();setTimeout(()=>openEditModal('${key}'),200)" style="flex:1;padding:12px;background:rgba(168,85,247,.25);border:1px solid rgba(168,85,247,.45);border-radius:11px;color:#e9d5ff;font-family:'Playfair Display',serif;font-size:14px;font-weight:700;cursor:pointer">✏️ Edit</button>
@@ -1419,6 +1421,49 @@ window.closeBookingDetail=function(){
   ge("bookingDetailModal").classList.remove("open");
   ge("bookingDetailModal").dataset.key="";
 };
+
+// Wire share button with addEventListener — works on all mobile browsers
+document.addEventListener('DOMContentLoaded',function(){
+  const btn=document.getElementById('waShareBtn');
+  if(!btn)return;
+  btn.addEventListener('click',function(e){
+    e.stopPropagation();
+    const key=document.getElementById('bookingDetailModal').dataset.key;
+    if(!key){alert('No booking selected');return;}
+    let r=allRequests[key];
+    if(!r){
+      const found=Object.entries(allRequests).find(([k,v])=>k===key||v._key===key);
+      if(found)r=found[1];
+    }
+    if(!r){alert('Booking data not found');return;}
+    const L=v=>(v&&String(v).trim())?String(v).trim():'—';
+    const P=v=>(v||'').replace(/[^0-9]/g,'').slice(-10);
+    const ep=P(r.execContact);
+    const dp=P(r.driverContact);
+    const lines=[
+      '🏛 *SBI LHO GUWAHATI*',
+      '*Vehicle Arrangement*',
+      '─────────────────',
+      '👤 Official: '+L(r.execName),
+      'Designation: '+L(r.execDesig),
+      ep?'📞 Official: '+ep:'',
+      '─────────────────',
+      '🗓 Date: '+L(r.journeyDate)+(r.journeyTime?' | '+r.journeyTime:''),
+      r.journeyToDate?'To: '+L(r.journeyToDate)+(r.journeyToTime?' | '+r.journeyToTime:''):'',
+      'Purpose: '+L(r.purpose),
+      r.notes?'Notes: '+L(r.notes):'',
+      '─────────────────',
+      r.vehicleNo?'🚘 '+L(r.vehicleType)+' | '+L(r.vehicleNo):'⏳ Vehicle awaited',
+      r.driverName?'👤 Driver: '+L(r.driverName):'',
+      r.driverBadge?'🪪 Badge: '+L(r.driverBadge):'',
+      dp?'📞 Driver: '+dp:'',
+      r.bookingComment?'💬 '+L(r.bookingComment):'',
+      '─────────────────',
+      '📲 SBI LHO Vehicle Allocation System'
+    ].filter(v=>v&&v.trim()).join('\n');
+    location.href='https://wa.me/?text='+encodeURIComponent(lines);
+  });
+});
 let editTargetKey=null;
 window.openEditModal=function(key){
   const r=allRequests[key]; if(!r) return;
