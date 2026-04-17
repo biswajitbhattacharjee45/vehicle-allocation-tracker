@@ -266,8 +266,6 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px;fon
 .btn-del:hover{background:rgba(239,68,68,.22)}
 .btn-edit{background:rgba(109,40,217,.08);color:#5b21b6;border-color:rgba(109,40,217,.2)}
 .btn-edit:hover{background:rgba(109,40,217,.15)}
-.btn-wa{background:rgba(37,211,102,.18);color:#16a34a;border-color:rgba(37,211,102,.4);padding:8px 14px;font-size:14px;border-radius:9px}
-.btn-wa:hover{background:rgba(37,211,102,.32)}
 
 /* FORM */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -854,13 +852,6 @@ tbody td{padding:11px 13px;vertical-align:middle;color:#fff;font-size:13.5px;fon
       <button onclick="closeBookingDetail()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:13px;font-weight:700;padding:5px 14px;cursor:pointer;font-family:'DM Sans',sans-serif">✕ Close</button>
     </div>
     <div id="bookingDetailContent" style="padding:0 20px"></div>
-    <!-- Share button fixed in modal HTML — never inside innerHTML -->
-    <div style="padding:0 20px 10px">
-      <button id="waShareBtn" style="width:100%;padding:14px;background:linear-gradient(135deg,#16a34a,#15803d);border:none;border-radius:12px;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.02em">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.486 2 2 6.486 2 12c0 1.783.472 3.501 1.368 5.003L2 22l5.134-1.347A9.955 9.955 0 0012 22c5.514 0 10-4.486 10-10S17.514 2 12 2zm0 18.154a8.12 8.12 0 01-4.142-1.132l-.297-.176-3.048.799.813-2.973-.193-.305A8.112 8.112 0 013.846 12C3.846 7.507 7.507 3.846 12 3.846c4.494 0 8.154 3.66 8.154 8.154 0 4.493-3.66 8.154-8.154 8.154z"/></svg>
-        Share via WhatsApp
-      </button>
-    </div>
   </div>
 </div>
 
@@ -1169,8 +1160,8 @@ function buildReqCard(r){
       <div onclick="event.stopPropagation()" style="display:flex;gap:6px">
         ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="event.stopPropagation();markCompleted('${r._key}')">✓</button>`:r.autoCompleted?`<span style="font-size:10px;color:#9ca3af;font-weight:600;padding:2px 6px;background:rgba(156,163,175,.12);border-radius:6px;border:1px solid rgba(156,163,175,.25);">🤖 Auto</span>`:""}
         <button class="btn-sm btn-edit" onclick="event.stopPropagation();openEditModal('${r._key}')">✏️</button>
-        <button class="btn-sm btn-wa" onclick="event.stopPropagation();waShare('${r._key}')">💬 WA</button>
         <button class="btn-sm btn-del" onclick="event.stopPropagation();deleteReq('${r._key}')">✕</button>
+        <button class="btn-sm" style="background:rgba(37,211,102,.15);color:#15803d;border:1px solid rgba(37,211,102,.4);padding:8px 12px;font-size:13px" onclick="event.stopPropagation();waShare('${r._key}')">💬</button>
       </div>
     </div>
   </div>`;
@@ -1342,7 +1333,6 @@ function renderAgentView(){
         ${r.bookingComment?`<br>💬 ${esc(r.bookingComment)}`:""}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
           ${r.driverContact?`<a href="tel:${esc(r.driverContact)}" style="display:inline-flex;align-items:center;gap:5px;padding:8px 16px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4);border-radius:9px;color:#6ee7b7;font-size:13px;font-weight:700;text-decoration:none;font-family:'DM Sans',sans-serif">📞 Call Driver</a>`:""}
-          <button onclick="shareOnWhatsApp('${r._key}')" style="display:inline-flex;align-items:center;gap:5px;padding:8px 16px;background:rgba(37,211,102,.2);border:1px solid rgba(37,211,102,.4);border-radius:9px;color:#4ade80;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">💬 Share</button>
           ${r.status!=="completed"?`<button onclick="openVehEdit('${r._key}')" style="display:inline-flex;align-items:center;gap:5px;padding:8px 16px;background:linear-gradient(135deg,rgba(168,85,247,.4),rgba(124,58,237,.4));border:1px solid rgba(168,85,247,.6);border-radius:9px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.02em;box-shadow:0 2px 10px rgba(124,58,237,.3)">✏️ Edit Vehicle / Driver</button>`:""}
         </div>
       </div>
@@ -1382,7 +1372,7 @@ window.openBookingDetail=function(key){
       <span class="sbadge ${r.status}" style="font-size:12px;padding:5px 14px">${statusLabel(r.status)}</span>
     </div>
     <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#fff;margin-bottom:4px">${esc(r.execName)}</div>
-    <div style="font-size:13px;color:rgba(210,180,255,.75);margin-bottom:20px;font-weight:500">${esc(r.execDesig||"")}${r.execContact?` · <a href="tel:${esc(r.execContact)}" style="color:#c4b5fd;text-decoration:none;font-weight:700">📞 ${esc(r.execContact)}</a>`:""}</div>
+    <div style="font-size:13px;color:rgba(210,180,255,.75);margin-bottom:20px;font-weight:500">${esc(r.execDesig||"")}${r.execContact?" · "+esc(r.execContact):""}</div>
 
     <div style="background:rgba(255,255,255,.05);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:4px 14px;margin-bottom:16px">
       ${row("Agency",esc(r.agencyName||"—"),"#e9d5ff")}
@@ -1411,62 +1401,17 @@ window.openBookingDetail=function(key){
       <div style="font-size:13px;color:#a5f3fc">${esc(r.bookingComment)}</div>
     </div>`:""}
 
-    <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap">
       ${r.status!=="completed"?`<button class="btn-primary" style="flex:1;margin-top:0;padding:12px;font-size:14px" onclick="markCompleted('${key}');closeBookingDetail()">✓ Mark Completed</button>`:""}
       <button onclick="closeBookingDetail();setTimeout(()=>openEditModal('${key}'),200)" style="flex:1;padding:12px;background:rgba(168,85,247,.25);border:1px solid rgba(168,85,247,.45);border-radius:11px;color:#e9d5ff;font-family:'Playfair Display',serif;font-size:14px;font-weight:700;cursor:pointer">✏️ Edit</button>
     </div>
     <button onclick="if(confirm('Delete this request?')){deleteReq('${key}');closeBookingDetail()}" style="width:100%;margin-top:10px;padding:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">🗑 Delete Request</button>
   `;
   ge("bookingDetailModal").classList.add("open");
-  ge("bookingDetailModal").dataset.key=key;
 };
 window.closeBookingDetail=function(){
   ge("bookingDetailModal").classList.remove("open");
-  ge("bookingDetailModal").dataset.key="";
 };
-
-// Wire share button with addEventListener — works on all mobile browsers
-document.addEventListener('DOMContentLoaded',function(){
-  const btn=document.getElementById('waShareBtn');
-  if(!btn)return;
-  btn.addEventListener('click',function(e){
-    e.stopPropagation();
-    const key=document.getElementById('bookingDetailModal').dataset.key;
-    if(!key){alert('No booking selected');return;}
-    let r=allRequests[key];
-    if(!r){
-      const found=Object.entries(allRequests).find(([k,v])=>k===key||v._key===key);
-      if(found)r=found[1];
-    }
-    if(!r){alert('Booking data not found');return;}
-    const L=v=>(v&&String(v).trim())?String(v).trim():'—';
-    const P=v=>(v||'').replace(/[^0-9]/g,'').slice(-10);
-    const ep=P(r.execContact);
-    const dp=P(r.driverContact);
-    const lines=[
-      '🏛 *SBI LHO GUWAHATI*',
-      '*Vehicle Arrangement*',
-      '─────────────────',
-      '👤 Official: '+L(r.execName),
-      'Designation: '+L(r.execDesig),
-      ep?'📞 Official: '+ep:'',
-      '─────────────────',
-      '🗓 Date: '+L(r.journeyDate)+(r.journeyTime?' | '+r.journeyTime:''),
-      r.journeyToDate?'To: '+L(r.journeyToDate)+(r.journeyToTime?' | '+r.journeyToTime:''):'',
-      'Purpose: '+L(r.purpose),
-      r.notes?'Notes: '+L(r.notes):'',
-      '─────────────────',
-      r.vehicleNo?'🚘 '+L(r.vehicleType)+' | '+L(r.vehicleNo):'⏳ Vehicle awaited',
-      r.driverName?'👤 Driver: '+L(r.driverName):'',
-      r.driverBadge?'🪪 Badge: '+L(r.driverBadge):'',
-      dp?'📞 Driver: '+dp:'',
-      r.bookingComment?'💬 '+L(r.bookingComment):'',
-      '─────────────────',
-      '📲 SBI LHO Vehicle Allocation System'
-    ].filter(v=>v&&v.trim()).join('\n');
-    location.href='https://wa.me/?text='+encodeURIComponent(lines);
-  });
-});
 let editTargetKey=null;
 window.openEditModal=function(key){
   const r=allRequests[key]; if(!r) return;
@@ -1943,6 +1888,23 @@ window.toast=function(msg,type="info"){
   const t=ge("toast");t.textContent=msg;t.className="toast show "+type;
   clearTimeout(toastT);toastT=setTimeout(()=>t.className="toast",3200);
 };
+
+window.waShare=function(k){
+  var keys=Object.keys(allRequests);
+  var r=allRequests[k];
+  if(!r){alert('Debug - key:'+k+' available:'+keys[0]);return;}
+  var t=encodeURIComponent(
+    'SBI LHO GUWAHATI - Vehicle Arrangement\n'+
+    'Official: '+(r.execName||'')+' ('+(r.execDesig||'')+')'+'\n'+
+    (r.execContact?'Contact: '+r.execContact+'\n':'')+
+    'Date: '+(r.journeyDate||'')+(r.journeyTime?' '+r.journeyTime:'')+'\n'+
+    'Purpose: '+(r.purpose||'')+'\n'+
+    (r.vehicleNo?'Vehicle: '+(r.vehicleType||'')+' '+(r.vehicleNo||'')+'\n':'')+
+    (r.driverName?'Driver: '+(r.driverName||'')+'\n':'')+
+    (r.driverContact?'Driver Ph: '+r.driverContact:'')
+  );
+  window.open('https://wa.me/?text='+t,'_blank','noopener');
+};
 </script>
 
 <script>
@@ -1960,145 +1922,6 @@ function showTab(id){
   const btn=document.querySelector('[data-tab="'+id+'"]');if(btn)btn.classList.add("active");
 }
 function toggleEl(id){const e=ge(id);if(e)e.style.display=e.style.display==="none"?"block":"none";}
-
-/* ── WHATSAPP SHARE ─────────────────────────────────────────────────────── */
-window.waShare=function(k){
-  var r=allRequests[k];
-  if(!r){
-    // Debug: show what keys exist
-    alert('Keys: '+Object.keys(allRequests).slice(0,3).join(', ')+' | Looking for: '+k);
-    return;
-  }
-  var n=function(v){return(v&&String(v).trim())?String(v).trim():'—';};
-  var p=function(v){return(v||'').replace(/[^0-9]/g,'').slice(-10);};
-  var ep=p(r.execContact);
-  var dp=p(r.driverContact);
-  var msg=[
-    '🏛 SBI LHO GUWAHATI',
-    'Vehicle Arrangement',
-    'Official: '+n(r.execName),
-    'Designation: '+n(r.execDesig),
-    ep?'Contact: '+ep:'',
-    'Date: '+n(r.journeyDate),
-    'Purpose: '+n(r.purpose),
-    r.vehicleNo?'Vehicle: '+n(r.vehicleType)+' '+n(r.vehicleNo):'Vehicle: Awaited',
-    r.driverName?'Driver: '+n(r.driverName):'',
-    dp?'Driver Ph: '+dp:''
-  ].filter(function(v){return v&&v.trim();}).join('%0A');
-  window.open('https://wa.me/?text='+msg,'_blank');
-};
-window.buildWAUrl=function(r){
-  if(!r)return '#';
-  const L=v=>(v&&String(v).trim())?String(v).trim():'—';
-  const P=v=>(v||'').replace(/[^0-9]/g,'').slice(-10);
-  const ep=P(r.execContact);
-  const dp=P(r.driverContact);
-  const lines=[
-    '🏛 *SBI LHO GUWAHATI*',
-    '*Vehicle Arrangement*',
-    '─────────────────',
-    '👤 *Official: '+L(r.execName)+'*',
-    'Designation: '+L(r.execDesig),
-    ep?'📞 '+ep:'',
-    '─────────────────',
-    '🗓 Date: '+L(r.journeyDate)+(r.journeyTime?' | '+r.journeyTime:''),
-    r.journeyToDate?'To: '+L(r.journeyToDate)+(r.journeyToTime?' | '+r.journeyToTime:''):'',
-    'Purpose: '+L(r.purpose),
-    r.notes?'Notes: '+L(r.notes):'',
-    '─────────────────',
-    r.vehicleNo?'🚘 *'+L(r.vehicleType)+' | '+L(r.vehicleNo)+'*':'⏳ Vehicle details awaited',
-    r.driverName?'👤 Driver: '+L(r.driverName):'',
-    r.driverBadge?'🪪 Badge: '+L(r.driverBadge):'',
-    dp?'📞 '+dp:'',
-    r.bookingComment?'💬 '+L(r.bookingComment):'',
-    '─────────────────',
-    '📲 SBI LHO Vehicle Allocation System'
-  ].filter(v=>v&&v.trim()).join('\n');
-  return 'https://wa.me/?text='+encodeURIComponent(lines);
-};
-window.shareRequest=function(key){
-  const r=allRequests[key];
-  if(!r){alert('Booking not found');return;}
-  const L=v=>(v&&String(v).trim())?String(v).trim():'—';
-  const P=v=>(v||'').replace(/[^0-9]/g,'').slice(-10);
-  const ep=P(r.execContact);
-  const dp=P(r.driverContact);
-  const lines=[
-    '🏛 *SBI LHO GUWAHATI*',
-    '*Vehicle Arrangement*',
-    '─────────────────',
-    '👤 *Official: '+L(r.execName)+'*',
-    'Designation: '+L(r.execDesig),
-    ep?'📞 '+ep:'',
-    '─────────────────',
-    '🗓 Date: '+L(r.journeyDate)+(r.journeyTime?' | '+r.journeyTime:''),
-    r.journeyToDate?'To: '+L(r.journeyToDate)+(r.journeyToTime?' | '+r.journeyToTime:''):'',
-    'Purpose: '+L(r.purpose),
-    r.notes?'Notes: '+L(r.notes):'',
-    '─────────────────',
-    r.vehicleNo?'🚘 *'+L(r.vehicleType)+' | '+L(r.vehicleNo)+'*':'⏳ Vehicle details awaited',
-    r.driverName?'👤 Driver: '+L(r.driverName):'',
-    r.driverBadge?'🪪 Badge: '+L(r.driverBadge):'',
-    dp?'📞 '+dp:'',
-    r.bookingComment?'💬 '+L(r.bookingComment):'',
-    '─────────────────',
-    '📲 SBI LHO Vehicle Allocation System'
-  ].filter(v=>v&&v.trim()).join('\n');
-  const url='https://wa.me/?text='+encodeURIComponent(lines);
-  const a=document.createElement('a');
-  a.href=url;
-  a.target='_blank';
-  a.rel='noopener noreferrer';
-  a.style.display='none';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(function(){document.body.removeChild(a);},1000);
-};
-
-window.shareOnWhatsApp=function(key){
-  // Try direct lookup first, then scan all requests
-  let r=allRequests[key];
-  if(!r){
-    // Scan all keys in case key format differs
-    const found=Object.entries(allRequests).find(([k,v])=>k===key||v._key===key);
-    if(found)r=found[1];
-  }
-  if(!r){alert('Could not find booking data. Please close and reopen the card.');return;}
-
-  const L=v=>(v&&String(v).trim())?String(v).trim():'—';
-  const P=v=>(v||'').replace(/[^0-9]/g,'').slice(-10);
-  const ep=P(r.execContact);
-  const dp=P(r.driverContact);
-
-  const lines=[
-    '🏛 *SBI LHO GUWAHATI*',
-    '*Vehicle Arrangement Details*',
-    '─────────────────────',
-    '',
-    '👤 *Official*',
-    'Name: '+L(r.execName),
-    'Designation: '+L(r.execDesig),
-    ep?'📞 '+ep+' ← tap to call official':'',
-    '',
-    '🗓 *Journey*',
-    'Date: '+L(r.journeyDate)+(r.journeyTime?' | '+r.journeyTime:''),
-    r.journeyToDate?'To: '+L(r.journeyToDate)+(r.journeyToTime?' | '+r.journeyToTime:''):'',
-    'Purpose: '+L(r.purpose),
-    r.notes?'Notes: '+L(r.notes):'',
-    '',
-    r.vehicleNo?'🚘 *Vehicle & Driver*':'⏳ Vehicle details awaited',
-    r.vehicleNo?L(r.vehicleType)+' | '+L(r.vehicleNo):'',
-    r.driverName?'Driver: '+L(r.driverName):'',
-    r.driverBadge?'Badge: '+L(r.driverBadge):'',
-    dp?'📞 '+dp+' ← tap to call driver':'',
-    r.bookingComment?'Note: '+L(r.bookingComment):'',
-    '',
-    '─────────────────────',
-    '📲 SBI LHO Vehicle Allocation System'
-  ].filter(v=>v!==null&&v!==undefined&&v!=='').join('\n');
-
-  location.href='https://wa.me/?text='+encodeURIComponent(lines);
-};
 </script>
 
 </body>
