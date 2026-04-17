@@ -1899,23 +1899,23 @@ window.waShare=function(k){
   var fmtPh=function(v){var d=(v||'').replace(/[^0-9]/g,'').slice(-10);return d?'+91 '+d.slice(0,5)+' '+d.slice(5):'';};
   var statusIcon={'pending':'🟡','assigned':'🟣','booked':'🔵','confirmed':'🟢','completed':'✅'}[r.status]||'🔘';
   var lines=[
-    '『 *SBI LHO GUWAHATI* 』',
-    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    '🏛  *OFFICIAL VEHICLE ARRANGEMENT*',
-    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '✦ *SBI LHO GUWAHATI* ✦',
+    '════════════════════════════',
+    '*🏛 OFFICIAL VEHICLE ARRANGEMENT*',
+    '════════════════════════════',
     '',
-    '◈  *GUEST / OFFICIAL*',
+    '〔 *GUEST \/ OFFICIAL* 〕',
     '▸  *'+N(r.execName)+'*',
     '   _'+N(r.execDesig)+'_',
     ep?'   📲  '+fmtPh(ep):'',
     '',
-    '◈  *JOURNEY*',
+    '〔 *JOURNEY* 〕',
     '▸  📅  *'+N(r.journeyDate)+'*'+(r.journeyTime?'   🕐  *'+r.journeyTime+'*':''),
     r.journeyToDate?'▸  🔁  Return: *'+N(r.journeyToDate)+'*'+(r.journeyToTime?'  🕐  '+r.journeyToTime:''):'',
     '▸  🎯  '+N(r.purpose),
     r.notes?'▸  📝  _'+N(r.notes)+'_':'',
     '',
-    r.vehicleNo?'◈  *VEHICLE & DRIVER*':'◈  *VEHICLE & DRIVER*',
+    '〔 *VEHICLE & DRIVER* 〕',
     r.vehicleNo?[
       '▸  🚘  *'+N(r.vehicleType)+'*   |   🔢  *'+N(r.vehicleNo)+'*',
       r.driverName?'▸  👨‍✈️  *'+N(r.driverName)+'*'+(r.driverBadge?'   🪪  Badge: '+N(r.driverBadge):''):'',
@@ -1926,11 +1926,10 @@ window.waShare=function(k){
     '▸  '+statusIcon+'  *Status:*  _'+((r.status||'').toUpperCase())+'_',
     '▸  🏢  *Agency:*  '+N(r.agencyName),
     '',
-    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '════════════════════════════',
     '🏦  _State Bank of India_',
     '     _Local Head Office, Guwahati_',
-    '     _Vehicle Allocation System_',
-    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+    '     _Vehicle Allocation System_'
   ].filter(function(v){return v!==null&&v!==undefined&&v!=='';}).join('\n');
   window.open('https://wa.me/?text='+encodeURIComponent(lines),'_blank','noopener');
 };
