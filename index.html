@@ -1169,7 +1169,7 @@ function buildReqCard(r){
       <div onclick="event.stopPropagation()" style="display:flex;gap:6px">
         ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="event.stopPropagation();markCompleted('${r._key}')">✓</button>`:r.autoCompleted?`<span style="font-size:10px;color:#9ca3af;font-weight:600;padding:2px 6px;background:rgba(156,163,175,.12);border-radius:6px;border:1px solid rgba(156,163,175,.25);">🤖 Auto</span>`:""}
         <button class="btn-sm btn-edit" onclick="event.stopPropagation();openEditModal('${r._key}')">✏️</button>
-        <button class="btn-sm btn-wa" onclick="event.stopPropagation();waShare('${r._key}')">💬 WA</button>
+        <button class="btn-sm btn-wa" data-wakey="${r._key}">💬 WA</button>
         <button class="btn-sm btn-del" onclick="event.stopPropagation();deleteReq('${r._key}')">✕</button>
       </div>
     </div>
@@ -1990,6 +1990,20 @@ window.waShare=function(k){
     +'\n📲 SBI LHO Vehicle Allocation System';
   location.assign('https://wa.me/?text='+encodeURIComponent(msg));
 };
+// Delegated WA share — fires on touchstart to bypass mobile propagation issues
+(function(){
+  function handleWA(e){
+    var btn=e.target.closest('[data-wakey]');
+    if(!btn)return;
+    e.preventDefault();
+    e.stopPropagation();
+    var k=btn.getAttribute('data-wakey');
+    waShare(k);
+  }
+  document.addEventListener('touchstart',handleWA,{passive:false});
+  document.addEventListener('click',handleWA);
+})();
+
 window.buildWAUrl=function(r){
   if(!r)return '#';
   const L=v=>(v&&String(v).trim())?String(v).trim():'—';
