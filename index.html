@@ -1169,7 +1169,7 @@ function buildReqCard(r){
       <div onclick="event.stopPropagation()" style="display:flex;gap:6px">
         ${r.status!=="completed"?`<button class="btn-sm btn-done" onclick="event.stopPropagation();markCompleted('${r._key}')">✓</button>`:r.autoCompleted?`<span style="font-size:10px;color:#9ca3af;font-weight:600;padding:2px 6px;background:rgba(156,163,175,.12);border-radius:6px;border:1px solid rgba(156,163,175,.25);">🤖 Auto</span>`:""}
         <button class="btn-sm btn-edit" onclick="event.stopPropagation();openEditModal('${r._key}')">✏️</button>
-        <a class="btn-sm btn-wa" href="${buildWAUrl(r)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Share via WhatsApp" style="text-decoration:none;display:inline-flex;align-items:center">💬</a>
+        <button class="btn-sm btn-wa" onclick="event.stopPropagation();waShare('${r._key}')">💬 WA</button>
         <button class="btn-sm btn-del" onclick="event.stopPropagation();deleteReq('${r._key}')">✕</button>
       </div>
     </div>
@@ -1962,6 +1962,34 @@ function showTab(id){
 function toggleEl(id){const e=ge(id);if(e)e.style.display=e.style.display==="none"?"block":"none";}
 
 /* ── WHATSAPP SHARE ─────────────────────────────────────────────────────── */
+window.waShare=function(k){
+  var r=allRequests[k];
+  if(!r){return;}
+  var n=function(v){return(v&&v.toString().trim())?v.toString().trim():'—';};
+  var p=function(v){return(v||'').toString().replace(/[^0-9]/g,'').slice(-10);};
+  var ep=p(r.execContact);
+  var dp=p(r.driverContact);
+  var msg='🏛 *SBI LHO GUWAHATI*'
+    +'\n*Vehicle Arrangement*'
+    +'\n─────────────────'
+    +'\n👤 *Official: '+n(r.execName)+'*'
+    +'\nDesignation: '+n(r.execDesig)
+    +(ep?'\n📞 '+ep:'')
+    +'\n─────────────────'
+    +'\n🗓 Date: '+n(r.journeyDate)+(r.journeyTime?' | '+r.journeyTime:'')
+    +(r.journeyToDate?'\nTo: '+n(r.journeyToDate)+(r.journeyToTime?' | '+r.journeyToTime:''):'')
+    +'\nPurpose: '+n(r.purpose)
+    +(r.notes?'\nNotes: '+n(r.notes):'')
+    +'\n─────────────────'
+    +(r.vehicleNo?'\n🚘 *'+n(r.vehicleType)+' | '+n(r.vehicleNo)+'*':'\n⏳ Vehicle details awaited')
+    +(r.driverName?'\n👤 Driver: '+n(r.driverName):'')
+    +(r.driverBadge?'\n🪪 Badge: '+n(r.driverBadge):'')
+    +(dp?'\n📞 Driver: '+dp:'')
+    +(r.bookingComment?'\n💬 '+n(r.bookingComment):'')
+    +'\n─────────────────'
+    +'\n📲 SBI LHO Vehicle Allocation System';
+  location.assign('https://wa.me/?text='+encodeURIComponent(msg));
+};
 window.buildWAUrl=function(r){
   if(!r)return '#';
   const L=v=>(v&&String(v).trim())?String(v).trim():'—';
